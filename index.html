@@ -13,7 +13,7 @@
       }
 
       body {
-        font-family: 'Segoe UI', sans-serif;
+        font-family: "Segoe UI", sans-serif;
         background: var(--bg);
         color: var(--text);
         padding: 20px;
@@ -140,9 +140,15 @@
       const gameId = "game1";
       let gameData = {};
 
-      document.getElementById("exportPdfBtn").addEventListener("click", exportResultToPdf);
-      document.getElementById("resetGameBtn").addEventListener("click", resetGame);
-      document.getElementById("shareWhatsappBtn").addEventListener("click", shareToWhatsapp);
+      document
+        .getElementById("exportPdfBtn")
+        .addEventListener("click", exportResultToPdf);
+      document
+        .getElementById("resetGameBtn")
+        .addEventListener("click", resetGame);
+      document
+        .getElementById("shareWhatsappBtn")
+        .addEventListener("click", shareToWhatsapp);
 
       function initEmptyGameData() {
         gameData = {
@@ -171,10 +177,14 @@
       }
 
       function fillSettingsInputs() {
-        document.getElementById("gameTitleInput").value = gameData.title || "Game-1";
-        document.getElementById("team1NameInput").value = gameData.team1Name || "Yusuf-Yüksel";
-        document.getElementById("team2NameInput").value = gameData.team2Name || "Ahmet-Mete";
-        document.getElementById("roundCountInput").value = gameData.roundCount || 21;
+        document.getElementById("gameTitleInput").value =
+          gameData.title || "Game-1";
+        document.getElementById("team1NameInput").value =
+          gameData.team1Name || "Yusuf-Yüksel";
+        document.getElementById("team2NameInput").value =
+          gameData.team2Name || "Ahmet-Mete";
+        document.getElementById("roundCountInput").value =
+          gameData.roundCount || 21;
       }
 
       function renderGame() {
@@ -191,19 +201,33 @@
               </tr>
             </thead>
             <tbody>
-              ${[...Array(gameData.roundCount).keys()].map(i => `
+              ${[...Array(gameData.roundCount).keys()]
+                .map(
+                  (i) => `
                 <tr>
                   <td>${i + 1}</td>
-                  <td><input type="text" value="${gameData.scoresTeam1[i] || 0}" id="${gameId}_team1_${i + 1}" oninput="updateGameData()"></td>
-                  <td><input type="text" value="${gameData.scoresTeam2[i] || 0}" id="${gameId}_team2_${i + 1}" oninput="updateGameData()"></td>
-                </tr>`).join("")}
+                  <td><input type="text" value="${
+                    gameData.scoresTeam1[i] || 0
+                  }" id="${gameId}_team1_${
+                    i + 1
+                  }" oninput="updateGameData()"></td>
+                  <td><input type="text" value="${
+                    gameData.scoresTeam2[i] || 0
+                  }" id="${gameId}_team2_${
+                    i + 1
+                  }" oninput="updateGameData()"></td>
+                </tr>`
+                )
+                .join("")}
             </tbody>
           </table>
           <div style="margin-top: 15px; text-align: center;">
-            <button onclick="applyPrize(1, true)">-100 to ${gameData.team1Name}</button>
-            <button onclick="applyPrize(1, false)">+100 to ${gameData.team1Name}</button>
-            <button onclick="applyPrize(2, true)">-100 to ${gameData.team2Name}</button>
-            <button onclick="applyPrize(2, false)">+100 to ${gameData.team2Name}</button>
+            <button onclick="applyPrizePrompt(1)">Adjust Prize for ${
+              gameData.team1Name
+            }</button>
+            <button onclick="applyPrizePrompt(2)">Adjust Prize for ${
+              gameData.team2Name
+            }</button>
             <button onclick="calculateResult()">Calculate Result</button>
             <button onclick="toggleResult()">Show/Hide Result</button>
           </div>
@@ -234,10 +258,14 @@
       }
 
       function updateSettings() {
-        gameData.title = document.getElementById("gameTitleInput").value || "Game-1";
-        gameData.team1Name = document.getElementById("team1NameInput").value || "Yusuf-Yüksel";
-        gameData.team2Name = document.getElementById("team2NameInput").value || "Ahmet-Mete";
-        let newRoundCount = parseInt(document.getElementById("roundCountInput").value) || 21;
+        gameData.title =
+          document.getElementById("gameTitleInput").value || "Game-1";
+        gameData.team1Name =
+          document.getElementById("team1NameInput").value || "Yusuf-Yüksel";
+        gameData.team2Name =
+          document.getElementById("team2NameInput").value || "Ahmet-Mete";
+        let newRoundCount =
+          parseInt(document.getElementById("roundCountInput").value) || 21;
 
         if (newRoundCount !== gameData.roundCount) {
           gameData.scoresTeam1 = Array(newRoundCount).fill(0);
@@ -260,33 +288,52 @@
         saveToLocal();
       }
 
-      function applyPrize(team, add = true) {
+      // New applyPrizePrompt function as per your requirement
+      function applyPrizePrompt(team) {
+        // OK means Add a prize (reduce 100 points)
+        // Cancel means Delete a prize (add 100 points)
+        const msg = `Click OK to Add a Prize (reduce 100 points)\nClick Cancel to Delete a Prize (add 100 points)`;
+        const addPrize = confirm(msg);
+
         if (team === 1) {
-          if (add) {
+          if (addPrize) {
             gameData.prizeTeam1 += 100;
-            gameData.prizeCount1 += 1;
-          } else if (gameData.prizeCount1 > 0) {
-            gameData.prizeTeam1 -= 100;
-            gameData.prizeCount1 -= 1;
+            gameData.prizeCount1++;
+          } else {
+            if (gameData.prizeCount1 > 0) {
+              gameData.prizeTeam1 -= 100;
+              gameData.prizeCount1--;
+            } else {
+              alert("No prize points to delete for " + gameData.team1Name);
+            }
           }
-        } else {
-          if (add) {
+        } else if (team === 2) {
+          if (addPrize) {
             gameData.prizeTeam2 += 100;
-            gameData.prizeCount2 += 1;
-          } else if (gameData.prizeCount2 > 0) {
-            gameData.prizeTeam2 -= 100;
-            gameData.prizeCount2 -= 1;
+            gameData.prizeCount2++;
+          } else {
+            if (gameData.prizeCount2 > 0) {
+              gameData.prizeTeam2 -= 100;
+              gameData.prizeCount2--;
+            } else {
+              alert("No prize points to delete for " + gameData.team2Name);
+            }
           }
         }
+
         updatePrizeTable();
         saveToLocal();
       }
 
       function updatePrizeTable() {
-        document.getElementById(`${gameId}_prizeCount1`).innerText = gameData.prizeCount1;
-        document.getElementById(`${gameId}_prizePoints1`).innerText = gameData.prizeTeam1;
-        document.getElementById(`${gameId}_prizeCount2`).innerText = gameData.prizeCount2;
-        document.getElementById(`${gameId}_prizePoints2`).innerText = gameData.prizeTeam2;
+        document.getElementById(`${gameId}_prizeCount1`).innerText =
+          gameData.prizeCount1;
+        document.getElementById(`${gameId}_prizePoints1`).innerText =
+          gameData.prizeTeam1;
+        document.getElementById(`${gameId}_prizeCount2`).innerText =
+          gameData.prizeCount2;
+        document.getElementById(`${gameId}_prizePoints2`).innerText =
+          gameData.prizeTeam2;
       }
 
       function calculateResult() {
@@ -312,7 +359,8 @@
 
       function toggleResult() {
         const resDiv = document.getElementById(`${gameId}_result`);
-        resDiv.style.display = resDiv.style.display === "none" ? "block" : "none";
+        resDiv.style.display =
+          resDiv.style.display === "none" ? "block" : "none";
       }
 
       function resetGame() {
@@ -348,7 +396,9 @@
         let y = 20;
         doc.setFontSize(12);
         for (let i = 0; i < gameData.roundCount; i++) {
-          const roundText = `Round ${i + 1}: ${gameData.team1Name} = ${gameData.scoresTeam1[i]}, ${gameData.team2Name} = ${gameData.scoresTeam2[i]}`;
+          const roundText = `Round ${i + 1}: ${gameData.team1Name} = ${
+            gameData.scoresTeam1[i]
+          }, ${gameData.team2Name} = ${gameData.scoresTeam2[i]}`;
           doc.text(roundText, 10, y);
           y += 7;
           if (y > 280) {
@@ -358,9 +408,17 @@
         }
 
         y += 5;
-        doc.text(`Total ${gameData.team1Name}: ${totalTeam1} (After Prizes: ${adj1})`, 10, y);
+        doc.text(
+          `Total ${gameData.team1Name}: ${totalTeam1} (After Prizes: ${adj1})`,
+          10,
+          y
+        );
         y += 7;
-        doc.text(`Total ${gameData.team2Name}: ${totalTeam2} (After Prizes: ${adj2})`, 10, y);
+        doc.text(
+          `Total ${gameData.team2Name}: ${totalTeam2} (After Prizes: ${adj2})`,
+          10,
+          y
+        );
         y += 7;
         doc.text(`Result: ${winner}`, 10, y);
 
@@ -381,7 +439,9 @@
         let text = `${gameData.title} Result:\n${gameData.team1Name}: ${adj1} (Prizes: ${gameData.prizeTeam1})\n${gameData.team2Name}: ${adj2} (Prizes: ${gameData.prizeTeam2})\nResult: ${winner}\n\nRounds:\n`;
 
         for (let i = 0; i < gameData.roundCount; i++) {
-          text += `Round ${i + 1}: ${gameData.team1Name} = ${gameData.scoresTeam1[i]}, ${gameData.team2Name} = ${gameData.scoresTeam2[i]}\n`;
+          text += `Round ${i + 1}: ${gameData.team1Name} = ${
+            gameData.scoresTeam1[i]
+          }, ${gameData.team2Name} = ${gameData.scoresTeam2[i]}\n`;
         }
 
         let whatsappUrl = `https://wa.me/?text=${encodeURIComponent(text)}`;

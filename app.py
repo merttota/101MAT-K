@@ -5,7 +5,7 @@ import base64
 from flask_cors import CORS
 
 app = Flask(__name__)
-CORS(app)  # Allow cross-origin for development
+CORS(app)
 
 @app.route("/")
 def index():
@@ -21,40 +21,59 @@ def analyze():
     scoresTeam2 = data["scoresTeam2"]
 
     round_count = len(scoresTeam1)
+    rounds = [f"R{i+1}" for i in range(round_count)]
 
-    # 1. Create total score per round
-    total_per_round = [scoresTeam1[i] + scoresTeam2[i] for i in range(round_count)]
+    # Calculate cumulative totals
+    cumulative_team1 = [sum(scoresTeam1[:i+1]) for i in range(round_count)]
+    cumulative_team2 = [sum(scoresTeam2[:i+1]) for i in range(round_count)]
+    difference = [cumulative_team1[i] - cumulative_team2[i] for i in range(round_count)]
 
-    # 2. Create team total scores
-    team1_total = sum(scoresTeam1)
-    team2_total = sum(scoresTeam2)
+    # ---------- GRAPH 1: Analiz (Cumulative scores) ----------
+    plt.figure(figsize=(8, 5))
+    plt.plot(rounds, cumulative_team1, marker='o', color='royalblue', label=team1)
+    plt.plot(rounds, cumulative_team2, marker='o', color='darkorange', label=team2)
+    plt.title("Analiz", fontsize=14, fontweight='bold')
+    plt.xlabel("")
+    plt.ylabel("")
+    plt.grid(True, linestyle='--', alpha=0.4)
+    plt.legend(loc='lower center', ncol=2)
 
-    # ---------- GRAPH 1: Total per round ----------
-    plt.figure()
-    plt.plot(range(1, round_count + 1), total_per_round, marker='o')
-    plt.title("Total Scores Per Round")
-    plt.xlabel("Round")
-    plt.ylabel("Total Score")
-    plt.grid(True)
+    # Display numeric values on points
+    for i, val in enumerate(cumulative_team1):
+        plt.text(i, val + 20, str(val), ha='center', fontsize=8, color='royalblue')
+    for i, val in enumerate(cumulative_team2):
+        plt.text(i, val + 20, str(val), ha='center', fontsize=8, color='darkorange')
+
     buf1 = io.BytesIO()
-    plt.savefig(buf1, format='png')
+    plt.tight_layout()
+    plt.savefig(buf1, format='png', dpi=200)
+    plt.close()
     buf1.seek(0)
     img1 = base64.b64encode(buf1.getvalue()).decode()
 
-    # ---------- GRAPH 2: Team point difference ----------
-    plt.figure()
-    plt.bar([team1, team2], [team1_total, team2_total])
-    plt.title("Team Point Totals")
-    plt.ylabel("Total Points")
+    # ---------- GRAPH 2: Fark (Difference) ----------
+    plt.figure(figsize=(8, 5))
+    plt.plot(range(1, round_count + 1), difference, marker='o', color='royalblue')
+    plt.title("Fark", fontsize=14, fontweight='bold')
+    plt.grid(True, linestyle='--', alpha=0.4)
+    plt.xticks(range(1, round_count + 1))
+    
+    # Display numeric values on points
+    for i, val in enumerate(difference):
+        plt.text(i + 1, val + (50 if val >= 0 else -50), str(val), ha='center', fontsize=8)
+
     buf2 = io.BytesIO()
-    plt.savefig(buf2, format='png')
+    plt.tight_layout()
+    plt.savefig(buf2, format='png', dpi=200)
+    plt.close()
     buf2.seek(0)
     img2 = base64.b64encode(buf2.getvalue()).decode()
 
     return jsonify({
-        "roundGraph": img1,
-        "diffGraph": img2
+        "analizGraph": img1,
+        "farkGraph": img2
     })
+
 
 if __name__ == "__main__":
     app.run(debug=True)

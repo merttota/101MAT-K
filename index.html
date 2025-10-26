@@ -104,6 +104,18 @@
         text-align: center;
       }
 
+      .graphs {
+        margin-top: 20px;
+        text-align: center;
+      }
+
+      .graphs img {
+        max-width: 90%;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        margin-top: 10px;
+      }
+
       @media (max-width: 600px) {
         .controls input {
           width: 100%;
@@ -130,13 +142,21 @@
       <button id="resetGameBtn">🔄 Reset Game</button>
       <button id="exportPdfBtn">📄 Export PDF</button>
       <button id="shareWhatsappBtn">📤 Share via WhatsApp</button>
+      <button id="generateGraphsBtn">📊 Generate Graphs</button>
     </div>
 
     <div id="gameContainer"></div>
 
+    <div class="graphs" id="graphContainer" style="display:none;">
+      <h3>Game Analysis</h3>
+      <img id="roundGraph" />
+      <img id="diffGraph" />
+    </div>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
     <script>
+      const BACKEND_URL = "https://one01mat-k.onrender.com"; // your live Render backend
       const gameId = "game1";
       let gameData = {};
 
@@ -149,6 +169,9 @@
       document
         .getElementById("shareWhatsappBtn")
         .addEventListener("click", shareToWhatsapp);
+      document
+        .getElementById("generateGraphsBtn")
+        .addEventListener("click", generateGraphs);
 
       function initEmptyGameData() {
         gameData = {
@@ -177,14 +200,10 @@
       }
 
       function fillSettingsInputs() {
-        document.getElementById("gameTitleInput").value =
-          gameData.title || "Game-1";
-        document.getElementById("team1NameInput").value =
-          gameData.team1Name || "Yusuf-Yüksel";
-        document.getElementById("team2NameInput").value =
-          gameData.team2Name || "Ahmet-Mete";
-        document.getElementById("roundCountInput").value =
-          gameData.roundCount || 21;
+        document.getElementById("gameTitleInput").value = gameData.title;
+        document.getElementById("team1NameInput").value = gameData.team1Name;
+        document.getElementById("team2NameInput").value = gameData.team2Name;
+        document.getElementById("roundCountInput").value = gameData.roundCount;
       }
 
       function renderGame() {
@@ -208,14 +227,10 @@
                   <td>${i + 1}</td>
                   <td><input type="text" value="${
                     gameData.scoresTeam1[i] || 0
-                  }" id="${gameId}_team1_${
-                    i + 1
-                  }" oninput="updateGameData()"></td>
+                  }" id="${gameId}_team1_${i + 1}" oninput="updateGameData()"></td>
                   <td><input type="text" value="${
                     gameData.scoresTeam2[i] || 0
-                  }" id="${gameId}_team2_${
-                    i + 1
-                  }" oninput="updateGameData()"></td>
+                  }" id="${gameId}_team2_${i + 1}" oninput="updateGameData()"></td>
                 </tr>`
                 )
                 .join("")}
@@ -261,10 +276,10 @@
         gameData.title =
           document.getElementById("gameTitleInput").value || "Game-1";
         gameData.team1Name =
-          document.getElementById("team1NameInput").value || "Yusuf-Yüksel";
+          document.getElementById("team1NameInput").value || "Team 1";
         gameData.team2Name =
-          document.getElementById("team2NameInput").value || "Ahmet-Mete";
-        let newRoundCount =
+          document.getElementById("team2NameInput").value || "Team 2";
+        const newRoundCount =
           parseInt(document.getElementById("roundCountInput").value) || 21;
 
         if (newRoundCount !== gameData.roundCount) {
@@ -272,26 +287,21 @@
           gameData.scoresTeam2 = Array(newRoundCount).fill(0);
           gameData.roundCount = newRoundCount;
         }
-
         saveToLocal();
         renderGame();
       }
 
       function updateGameData() {
         for (let i = 1; i <= gameData.roundCount; i++) {
-          let val1 = document.getElementById(`${gameId}_team1_${i}`).value;
-          let val2 = document.getElementById(`${gameId}_team2_${i}`).value;
-
-          gameData.scoresTeam1[i - 1] = Number(val1) || 0;
-          gameData.scoresTeam2[i - 1] = Number(val2) || 0;
+          gameData.scoresTeam1[i - 1] =
+            Number(document.getElementById(`${gameId}_team1_${i}`).value) || 0;
+          gameData.scoresTeam2[i - 1] =
+            Number(document.getElementById(`${gameId}_team2_${i}`).value) || 0;
         }
         saveToLocal();
       }
 
-      // New applyPrizePrompt function as per your requirement
       function applyPrizePrompt(team) {
-        // OK means Add a prize (reduce 100 points)
-        // Cancel means Delete a prize (add 100 points)
         const msg = `Click OK to Add a Prize (reduce 100 points)\nClick Cancel to Delete a Prize (add 100 points)`;
         const addPrize = confirm(msg);
 
@@ -299,28 +309,19 @@
           if (addPrize) {
             gameData.prizeTeam1 += 100;
             gameData.prizeCount1++;
-          } else {
-            if (gameData.prizeCount1 > 0) {
-              gameData.prizeTeam1 -= 100;
-              gameData.prizeCount1--;
-            } else {
-              alert("No prize points to delete for " + gameData.team1Name);
-            }
+          } else if (gameData.prizeCount1 > 0) {
+            gameData.prizeTeam1 -= 100;
+            gameData.prizeCount1--;
           }
         } else if (team === 2) {
           if (addPrize) {
             gameData.prizeTeam2 += 100;
             gameData.prizeCount2++;
-          } else {
-            if (gameData.prizeCount2 > 0) {
-              gameData.prizeTeam2 -= 100;
-              gameData.prizeCount2--;
-            } else {
-              alert("No prize points to delete for " + gameData.team2Name);
-            }
+          } else if (gameData.prizeCount2 > 0) {
+            gameData.prizeTeam2 -= 100;
+            gameData.prizeCount2--;
           }
         }
-
         updatePrizeTable();
         saveToLocal();
       }
@@ -337,16 +338,14 @@
       }
 
       function calculateResult() {
-        let totalTeam1 = gameData.scoresTeam1.reduce((a, b) => a + b, 0);
-        let totalTeam2 = gameData.scoresTeam2.reduce((a, b) => a + b, 0);
+        const total1 = gameData.scoresTeam1.reduce((a, b) => a + b, 0);
+        const total2 = gameData.scoresTeam2.reduce((a, b) => a + b, 0);
+        const adj1 = total1 - gameData.prizeTeam1;
+        const adj2 = total2 - gameData.prizeTeam2;
 
-        let adj1 = totalTeam1 - gameData.prizeTeam1;
-        let adj2 = totalTeam2 - gameData.prizeTeam2;
-
-        let winner = "";
+        let winner = "It's a tie!";
         if (adj1 < adj2) winner = `${gameData.team1Name} win`;
         else if (adj2 < adj1) winner = `${gameData.team2Name} win`;
-        else winner = "It's a tie!";
 
         const resDiv = document.getElementById(`${gameId}_result`);
         resDiv.innerHTML = `
@@ -376,76 +375,64 @@
         localStorage.setItem("singleGameData", JSON.stringify(gameData));
       }
 
+      async function generateGraphs() {
+        try {
+          document.getElementById("graphContainer").style.display = "block";
+          document.getElementById("roundGraph").src = "";
+          document.getElementById("diffGraph").src = "";
+
+          const res = await fetch(`${BACKEND_URL}/analyze`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              team1: gameData.team1Name,
+              team2: gameData.team2Name,
+              scoresTeam1: gameData.scoresTeam1,
+              scoresTeam2: gameData.scoresTeam2,
+            }),
+          });
+
+          const result = await res.json();
+          document.getElementById("roundGraph").src =
+            "data:image/png;base64," + result.roundGraph;
+          document.getElementById("diffGraph").src =
+            "data:image/png;base64," + result.diffGraph;
+        } catch (err) {
+          alert("Error generating graphs: " + err);
+        }
+      }
+
       function exportResultToPdf() {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
-
-        let totalTeam1 = gameData.scoresTeam1.reduce((a, b) => a + b, 0);
-        let totalTeam2 = gameData.scoresTeam2.reduce((a, b) => a + b, 0);
-        let adj1 = totalTeam1 - gameData.prizeTeam1;
-        let adj2 = totalTeam2 - gameData.prizeTeam2;
-
-        let winner = "";
-        if (adj1 < adj2) winner = `${gameData.team1Name} win`;
-        else if (adj2 < adj1) winner = `${gameData.team2Name} win`;
-        else winner = "It's a tie!";
-
-        doc.setFontSize(14);
-        doc.text(gameData.title + " Result", 10, 10);
-
         let y = 20;
-        doc.setFontSize(12);
+        doc.text(gameData.title + " Result", 10, 10);
         for (let i = 0; i < gameData.roundCount; i++) {
-          const roundText = `Round ${i + 1}: ${gameData.team1Name} = ${
-            gameData.scoresTeam1[i]
-          }, ${gameData.team2Name} = ${gameData.scoresTeam2[i]}`;
-          doc.text(roundText, 10, y);
+          doc.text(
+            `Round ${i + 1}: ${gameData.team1Name} = ${gameData.scoresTeam1[i]}, ${gameData.team2Name} = ${gameData.scoresTeam2[i]}`,
+            10,
+            y
+          );
           y += 7;
           if (y > 280) {
             doc.addPage();
             y = 20;
           }
         }
-
-        y += 5;
-        doc.text(
-          `Total ${gameData.team1Name}: ${totalTeam1} (After Prizes: ${adj1})`,
-          10,
-          y
-        );
-        y += 7;
-        doc.text(
-          `Total ${gameData.team2Name}: ${totalTeam2} (After Prizes: ${adj2})`,
-          10,
-          y
-        );
-        y += 7;
-        doc.text(`Result: ${winner}`, 10, y);
-
         doc.save("game_result.pdf");
       }
 
       function shareToWhatsapp() {
-        let totalTeam1 = gameData.scoresTeam1.reduce((a, b) => a + b, 0);
-        let totalTeam2 = gameData.scoresTeam2.reduce((a, b) => a + b, 0);
-        let adj1 = totalTeam1 - gameData.prizeTeam1;
-        let adj2 = totalTeam2 - gameData.prizeTeam2;
-
-        let winner = "";
+        const total1 = gameData.scoresTeam1.reduce((a, b) => a + b, 0);
+        const total2 = gameData.scoresTeam2.reduce((a, b) => a + b, 0);
+        const adj1 = total1 - gameData.prizeTeam1;
+        const adj2 = total2 - gameData.prizeTeam2;
+        let winner = "It's a tie!";
         if (adj1 < adj2) winner = `${gameData.team1Name} win`;
         else if (adj2 < adj1) winner = `${gameData.team2Name} win`;
-        else winner = "It's a tie!";
 
-        let text = `${gameData.title} Result:\n${gameData.team1Name}: ${adj1} (Prizes: ${gameData.prizeTeam1})\n${gameData.team2Name}: ${adj2} (Prizes: ${gameData.prizeTeam2})\nResult: ${winner}\n\nRounds:\n`;
-
-        for (let i = 0; i < gameData.roundCount; i++) {
-          text += `Round ${i + 1}: ${gameData.team1Name} = ${
-            gameData.scoresTeam1[i]
-          }, ${gameData.team2Name} = ${gameData.scoresTeam2[i]}\n`;
-        }
-
-        let whatsappUrl = `https://wa.me/?text=${encodeURIComponent(text)}`;
-        window.open(whatsappUrl, "_blank");
+        let text = `${gameData.title} Result:\n${gameData.team1Name}: ${adj1}\n${gameData.team2Name}: ${adj2}\nWinner: ${winner}`;
+        window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
       }
 
       initialize();

@@ -114,6 +114,15 @@
         border: 1px solid #ccc;
         border-radius: 6px;
         margin-top: 10px;
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+      /* Eklenen genel img stili */
+      img {
+        max-width: 100%;
+        height: auto;
       }
 
       @media (max-width: 600px) {
@@ -149,14 +158,14 @@
 
     <div class="graphs" id="graphContainer" style="display:none;">
       <h3>Game Analysis</h3>
-      <img id="roundGraph" />
-      <img id="diffGraph" />
+      <img id="roundGraph" alt="Analiz Grafiği" />
+      <img id="diffGraph" alt="Fark Grafiği" />
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
     <script>
-      const BACKEND_URL = "https://one01mat-k.onrender.com"; // your live Render backend
+      const BACKEND_URL = "https://one01mat-k.onrender.com"; // Flask backend adresin
       const gameId = "game1";
       let gameData = {};
 
@@ -393,12 +402,18 @@
           });
 
           const result = await res.json();
-          document.getElementById("roundGraph").src =
-            "data:image/png;base64," + result.roundGraph;
-          document.getElementById("diffGraph").src =
-            "data:image/png;base64," + result.diffGraph;
+          console.log("Backend result:", result);
+
+          if (result.analizGraph && result.farkGraph) {
+            document.getElementById("roundGraph").src =
+              "data:image/png;base64," + result.analizGraph;
+            document.getElementById("diffGraph").src =
+              "data:image/png;base64," + result.farkGraph;
+          } else {
+            alert("Grafikler alınamadı. Backend yanıtını kontrol et.");
+          }
         } catch (err) {
-          alert("Error generating graphs: " + err);
+          alert("Grafik oluşturulurken hata: " + err);
         }
       }
 

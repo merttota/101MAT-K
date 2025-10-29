@@ -50,7 +50,7 @@ def analyze():
     plt.close()
     buf1.seek(0)
     img1 = base64.b64encode(buf1.getvalue()).decode()
-
+    
     # ---------- GRAPH 2: Fark (Difference) ----------
     plt.figure(figsize=(8, 5))
     plt.plot(range(1, round_count + 1), difference, marker='o', color='royalblue')
@@ -58,9 +58,14 @@ def analyze():
     plt.grid(True, linestyle='--', alpha=0.4)
     plt.xticks(range(1, round_count + 1))
     
+    # ✅ Draw horizontal zero-line only if 0 is between min & max
+    if min(difference) < 0 < max(difference):
+        plt.axhline(0, linestyle='--', linewidth=1)
+    
     # Display numeric values on points
     for i, val in enumerate(difference):
         plt.text(i + 1, val + (50 if val >= 0 else -50), str(val), ha='center', fontsize=8)
+
 
     buf2 = io.BytesIO()
     plt.tight_layout()

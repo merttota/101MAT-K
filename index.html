@@ -10,6 +10,7 @@
         --accent: #e6f0ff;
         --text: #333;
         --bg: #f9f9f9;
+        --success: #28a745;
       }
 
       body {
@@ -57,6 +58,14 @@
 
       button:hover {
         background-color: #004999;
+      }
+
+      /* Green button for Excel */
+      #exportExcelBtn {
+        background-color: var(--success);
+      }
+      #exportExcelBtn:hover {
+        background-color: #218838;
       }
 
       .game-container {
@@ -119,7 +128,6 @@
         margin-right: auto;
       }
 
-      /* Eklenen genel img stili */
       img {
         max-width: 100%;
         height: auto;
@@ -149,9 +157,9 @@
 
     <div class="button-bar">
       <button id="resetGameBtn">🔄 Reset Game</button>
-      <button id="exportPdfBtn">📄 Export PDF</button>
+      <button id="exportExcelBtn">📊 Export Excel</button>
       <button id="shareWhatsappBtn">📤 Share via WhatsApp</button>
-      <button id="generateGraphsBtn">📊 Generate Graphs</button>
+      <button id="generateGraphsBtn">📈 Generate Graphs</button>
     </div>
 
     <div id="gameContainer"></div>
@@ -162,16 +170,17 @@
       <img id="diffGraph" alt="Fark Grafiği" />
     </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
 
     <script>
-      const BACKEND_URL = "https://one01mat-k.onrender.com"; // Flask backend adresin
+      const BACKEND_URL = "https://one01mat-k.onrender.com"; 
       const gameId = "game1";
       let gameData = {};
 
+      // Updated Event Listener for Excel
       document
-        .getElementById("exportPdfBtn")
-        .addEventListener("click", exportResultToPdf);
+        .getElementById("exportExcelBtn")
+        .addEventListener("click", exportResultToExcel);
       document
         .getElementById("resetGameBtn")
         .addEventListener("click", resetGame);
@@ -417,24 +426,60 @@
         }
       }
 
-      function exportResultToPdf() {
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
-        let y = 20;
-        doc.text(gameData.title + " Result", 10, 10);
+      // NEW EXCEL EXPORT FUNCTION
+      function exportResultToExcel() {
+        // 1. Calculate stats dynamically
+        const total1 = gameData.scoresTeam1.reduce((a, b) => a + b, 0);
+        const total2 = gameData.scoresTeam2.reduce((a, b) => a + b, 0);
+        const net1 = total1 - gameData.prizeTeam1;
+        const net2 = total2 - gameData.prizeTeam2;
+
+        // 2. Build the data array for the sheet
+        // Header Row (Matches row 1 in your image)
+        const ws_data = [
+            ["All Games", gameData.team1Name, gameData.team2Name]
+        ];
+
+        // Round Rows (Matches rows 2-22 in your image)
         for (let i = 0; i < gameData.roundCount; i++) {
-          doc.text(
-            `Round ${i + 1}: ${gameData.team1Name} = ${gameData.scoresTeam1[i]}, ${gameData.team2Name} = ${gameData.scoresTeam2[i]}`,
-            10,
-            y
-          );
-          y += 7;
-          if (y > 280) {
-            doc.addPage();
-            y = 20;
-          }
+            ws_data.push([
+                `Round ${i + 1}`,
+                gameData.scoresTeam1[i],
+                gameData.scoresTeam2[i]
+            ]);
         }
-        doc.save("game_result.pdf");
+
+        // Summary Rows (Matches rows 23-24 in your image)
+        // Row 23: Team 1 Summary + Prize Counts for Team 1 and Team 2 in respective columns
+        ws_data.push([
+            `Total ${gameData.team1Name}: ${total1} (After Prizes: ${net1})`,
+            `Prizes = ${gameData.prizeCount1}`,
+            `Prizes = ${gameData.prizeCount2}`
+        ]);
+
+        // Row 24: Team 2 Summary
+        ws_data.push([
+            `Total ${gameData.team2Name}: ${total2} (After Prizes: ${net2})`,
+            "", // Blank cell
+            ""  // Blank cell
+        ]);
+
+        // 3. Create Workbook and Worksheet
+        const ws = XLSX.utils.aoa_to_sheet(ws_data);
+        
+        // Adjust column widths to make text readable
+        const wscols = [
+            {wch: 40}, // Column A width (approx chars)
+            {wch: 15}, // Column B
+            {wch: 15}  // Column C
+        ];
+        ws['!cols'] = wscols;
+
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Game Results");
+
+        // 4. Download file
+        XLSX.writeFile(wb, `${gameData.title}_results.xlsx`);
       }
 
       function shareToWhatsapp() {

@@ -113,107 +113,167 @@
         font-size: 12px;
       }
 
-      /* General Scoreboard */
-      .overall-box {
+      /* Button Styles */
+      .btn {
         background: var(--surface2);
         border: 1px solid var(--border);
-        border-radius: 8px;
-        padding: 8px 12px;
-        margin-bottom: 12px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        flex-wrap: wrap;
-        gap: 10px;
-      }
-      .ov-team-ctrl {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        font-size: 11px;
-        font-weight: 500;
-      }
-      .ov-btn {
-        background: var(--surface);
-        border: 1px solid var(--border);
         color: var(--text);
-        border-radius: 4px;
-        width: 24px;
-        height: 24px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
+        padding: 10px 14px;
+        border-radius: 9px;
         cursor: pointer;
+        font-family: var(--font);
         font-size: 14px;
-        transition: background 0.15s;
-      }
-      .ov-btn:hover {
-        background: var(--border);
-      }
-      .ov-btn:active {
-        transform: scale(0.95);
-      }
-
-      .btn {
+        font-weight: 500;
+        transition: all 0.15s;
         display: inline-flex;
         align-items: center;
         justify-content: center;
         gap: 6px;
-        padding: 9px 16px;
-        font-size: 13px;
-        font-weight: 500;
-        font-family: var(--font);
-        border: 1px solid var(--border);
-        border-radius: 9px;
-        background: var(--surface2);
-        color: var(--text);
-        cursor: pointer;
-        transition: all 0.15s;
-        white-space: nowrap;
+        outline: none;
       }
       .btn:hover {
-        background: var(--border);
-      }
-      .btn:active {
-        transform: scale(0.97);
+        border-color: var(--muted);
       }
       .btn-accent {
         background: var(--accent);
-        border-color: var(--accent);
         color: #fff;
+        border-color: var(--accent);
       }
       .btn-accent:hover {
-        opacity: 0.9;
-        background: var(--accent);
+        background: #4778d9;
+        border-color: #4778d9;
       }
       .btn-green {
         background: var(--accent2);
+        color: #fff;
         border-color: var(--accent2);
-        color: #0f1117;
       }
       .btn-green:hover {
-        opacity: 0.9;
-        background: var(--accent2);
-      }
-      .btn-warn {
-        background: rgba(245, 158, 11, 0.15);
-        border-color: var(--warn);
-        color: var(--warn);
+        background: #32b57c;
+        border-color: #32b57c;
       }
       .btn-danger {
         background: rgba(244, 63, 94, 0.1);
-        border-color: var(--danger);
         color: var(--danger);
+        border-color: rgba(244, 63, 94, 0.3);
+      }
+      .btn-danger:hover {
+        background: rgba(244, 63, 94, 0.2);
       }
       .btn-sm {
-        padding: 5px 10px;
+        padding: 6px 10px;
         font-size: 12px;
-        border-radius: 7px;
+        border-radius: 6px;
       }
       .btn-bar {
         display: flex;
+        gap: 10px;
         flex-wrap: wrap;
+      }
+      .btn-bar .btn {
+        flex: 1;
+        min-width: 120px;
+      }
+
+      /* General Scoreboard */
+      .overall-box {
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 10px 12px;
+        margin-bottom: 18px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .overall-box-header {
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+
+      .overall-controls {
+        display: flex;
+        gap: 10px;
+      }
+
+      .ov-team-ctrl {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
         gap: 8px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 8px;
+        min-width: 0;
+      }
+
+      .ov-team-ctrl span:first-child {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        max-width: 90px;
+        font-size: 12px;
+        font-weight: 600;
+      }
+
+      .ov-btn {
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        color: var(--text);
+        border-radius: 5px;
+        width: 28px;
+        height: 28px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-size: 15px;
+        transition:
+          background 0.15s,
+          transform 0.1s;
+        flex-shrink: 0;
+      }
+
+      .ov-btn:hover {
+        background: var(--border);
+      }
+
+      .ov-btn:active {
+        transform: scale(0.95);
+      }
+
+      /* Mobile Optimization */
+      @media (max-width: 520px) {
+        .overall-controls {
+          flex-direction: column;
+        }
+
+        .ov-team-ctrl {
+          justify-content: space-between;
+          padding: 10px 12px;
+        }
+
+        .ov-team-ctrl span:first-child {
+          max-width: 140px;
+          font-size: 13px;
+        }
+
+        #ov1ScoreDisplay,
+        #ov2ScoreDisplay {
+          font-size: 18px !important;
+        }
+
+        .ov-btn {
+          width: 32px;
+          height: 32px;
+          font-size: 17px;
+        }
       }
 
       /* Tabs */
@@ -622,33 +682,18 @@
   <body>
     <h1>🎯 Game <span>Calculator</span></h1>
 
-    <div class="card settings-card">
+    <div class="card">
       <div class="overall-box">
-        <div
-          style="
-            font-size: 11px;
-            font-weight: 600;
-            color: var(--muted);
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-          "
-        >
-          General Scoreboard
-        </div>
-        <div style="display: flex; gap: 16px">
+        <div class="overall-box-header">General Scoreboard</div>
+
+        <div class="overall-controls">
           <div class="ov-team-ctrl">
-            <span
-              id="ov1NameDisplay"
-              style="
-                color: var(--accent);
-                max-width: 80px;
-                overflow: hidden;
-                text-overflow: ellipsis;
-                white-space: nowrap;
-              "
-              >Team 1</span
-            >
+            <span id="ov1NameDisplay" style="color: var(--accent)">
+              Team 1
+            </span>
+
             <button class="ov-btn" onclick="updOverall(1, -1)">-</button>
+
             <span
               id="ov1ScoreDisplay"
               style="
@@ -657,23 +702,20 @@
                 width: 18px;
                 text-align: center;
               "
-              >0</span
             >
+              0
+            </span>
+
             <button class="ov-btn" onclick="updOverall(1, 1)">+</button>
           </div>
+
           <div class="ov-team-ctrl">
-            <span
-              id="ov2NameDisplay"
-              style="
-                color: var(--accent2);
-                max-width: 80px;
-                overflow: hidden;
-                text-overflow: ellipsis;
-                white-space: nowrap;
-              "
-              >Team 2</span
-            >
+            <span id="ov2NameDisplay" style="color: var(--accent2)">
+              Team 2
+            </span>
+
             <button class="ov-btn" onclick="updOverall(2, -1)">-</button>
+
             <span
               id="ov2ScoreDisplay"
               style="
@@ -682,8 +724,10 @@
                 width: 18px;
                 text-align: center;
               "
-              >0</span
             >
+              0
+            </span>
+
             <button class="ov-btn" onclick="updOverall(2, 1)">+</button>
           </div>
         </div>

@@ -36,7 +36,7 @@
         font-size: 22px;
         font-weight: 600;
         text-align: center;
-        margin-bottom: 20px;
+        margin-bottom: 16px;
         letter-spacing: -0.3px;
       }
       h1 span {
@@ -89,6 +89,71 @@
       input:focus {
         border-color: var(--accent);
       }
+
+      /* Compact Settings specific styles */
+      .settings-card {
+        padding: 12px 14px;
+        margin-bottom: 12px;
+      }
+      .settings-card .settings-grid {
+        gap: 8px;
+        margin-bottom: 8px;
+      }
+      .settings-card input[type="text"],
+      .settings-card input[type="number"] {
+        padding: 7px 9px;
+        font-size: 13px;
+        border-radius: 7px;
+      }
+      .settings-card .section-label {
+        margin-bottom: 8px;
+      }
+      .settings-card .btn {
+        padding: 7px 12px;
+        font-size: 12px;
+      }
+
+      /* General Scoreboard */
+      .overall-box {
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 8px 12px;
+        margin-bottom: 12px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+      .ov-team-ctrl {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+        font-weight: 500;
+      }
+      .ov-btn {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        color: var(--text);
+        border-radius: 4px;
+        width: 24px;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-size: 14px;
+        transition: background 0.15s;
+      }
+      .ov-btn:hover {
+        background: var(--border);
+      }
+      .ov-btn:active {
+        transform: scale(0.95);
+      }
+
       .btn {
         display: inline-flex;
         align-items: center;
@@ -557,7 +622,73 @@
   <body>
     <h1>🎯 Game <span>Calculator</span></h1>
 
-    <div class="card">
+    <div class="card settings-card">
+      <div class="overall-box">
+        <div
+          style="
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+          "
+        >
+          General Scoreboard
+        </div>
+        <div style="display: flex; gap: 16px">
+          <div class="ov-team-ctrl">
+            <span
+              id="ov1NameDisplay"
+              style="
+                color: var(--accent);
+                max-width: 80px;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+              "
+              >Team 1</span
+            >
+            <button class="ov-btn" onclick="updOverall(1, -1)">-</button>
+            <span
+              id="ov1ScoreDisplay"
+              style="
+                font-family: var(--mono);
+                font-size: 16px;
+                width: 18px;
+                text-align: center;
+              "
+              >0</span
+            >
+            <button class="ov-btn" onclick="updOverall(1, 1)">+</button>
+          </div>
+          <div class="ov-team-ctrl">
+            <span
+              id="ov2NameDisplay"
+              style="
+                color: var(--accent2);
+                max-width: 80px;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+              "
+              >Team 2</span
+            >
+            <button class="ov-btn" onclick="updOverall(2, -1)">-</button>
+            <span
+              id="ov2ScoreDisplay"
+              style="
+                font-family: var(--mono);
+                font-size: 16px;
+                width: 18px;
+                text-align: center;
+              "
+              >0</span
+            >
+            <button class="ov-btn" onclick="updOverall(2, 1)">+</button>
+          </div>
+        </div>
+      </div>
+
       <p class="section-label">Settings</p>
       <div class="settings-grid">
         <label class="field full"
@@ -591,10 +722,7 @@
         /></label>
       </div>
 
-      <p class="section-label" style="display: none; margin-top: 10px">
-        Player names (4 players, 2 per team)
-      </p>
-      <div class="settings-grid" style="display: none">
+      <div style="display: none">
         <label class="field"
           >Player 1 (Team 1)<input
             type="text"
@@ -628,7 +756,7 @@
       <button
         class="btn btn-accent"
         onclick="applySettings()"
-        style="margin-top: 10px"
+        style="margin-top: 4px"
       >
         &#10003; Apply settings
       </button>
@@ -791,6 +919,9 @@
         paylog: [],
         // player names
         players: ["Yusuf", "Yüksel", "Ahmet", "Mete"],
+        // Overall wins
+        overall1: 0,
+        overall2: 0,
       };
 
       // ─── Persist ─────────────────────────────────────────────────────────────────
@@ -802,6 +933,8 @@
         if (s) {
           gd = JSON.parse(s);
           if (!gd.players) gd.players = ["Yusuf", "Yüksel", "Ahmet", "Mete"];
+          if (gd.overall1 === undefined) gd.overall1 = 0;
+          if (gd.overall2 === undefined) gd.overall2 = 0;
         }
         syncInputs();
         render();
@@ -813,6 +946,24 @@
         document.getElementById("roundsInput").value = gd.rounds;
         for (let i = 0; i < 4; i++)
           document.getElementById(`p${i + 1}Input`).value = gd.players[i] || "";
+        renderOverallDisplay();
+      }
+
+      // ─── Overall Scoreboard ──────────────────────────────────────────────────────
+      function updOverall(team, amount) {
+        if (team === 1) gd.overall1 = Math.max(0, (gd.overall1 || 0) + amount);
+        else gd.overall2 = Math.max(0, (gd.overall2 || 0) + amount);
+        save();
+        renderOverallDisplay();
+      }
+
+      function renderOverallDisplay() {
+        document.getElementById("ov1NameDisplay").textContent = gd.team1;
+        document.getElementById("ov2NameDisplay").textContent = gd.team2;
+        document.getElementById("ov1ScoreDisplay").textContent =
+          gd.overall1 || 0;
+        document.getElementById("ov2ScoreDisplay").textContent =
+          gd.overall2 || 0;
       }
 
       // ─── Settings ────────────────────────────────────────────────────────────────
@@ -834,6 +985,7 @@
           gd.players[i] =
             document.getElementById(`p${i + 1}Input`).value.trim() ||
             `Player ${i + 1}`;
+
         if (newR !== gd.rounds) {
           if (newR > gd.rounds) {
             gd.s1 = [...gd.s1, ...Array(newR - gd.rounds).fill(0)];
@@ -854,6 +1006,7 @@
         document.getElementById("gameTitleDisplay").textContent = gd.title;
         document.getElementById("th1").textContent = gd.team1;
         document.getElementById("th2").textContent = gd.team2;
+        renderOverallDisplay();
         renderScores();
         renderPrizes();
         renderPaycheck();
@@ -1216,7 +1369,7 @@
       function resetGame() {
         if (
           !confirm(
-            "Reset game scores and prizes?\n\nPayments and settings will be kept.",
+            "Reset game scores and prizes?\n\nOverall Scoreboard, Payments and Settings will be kept.",
           )
         )
           return;
@@ -1314,7 +1467,7 @@
           gd.paylog.length > 0
             ? `Last paid: ${gd.paylog[0].playerName} (${gd.paylog[0].teamName}) at ${gd.paylog[0].ts}`
             : "No payment record";
-        const msg = `*${gd.title}*\n\n${gd.team1}: ${net1} pts (raw ${raw1}, prizes −${p1})\n${gd.team2}: ${net2} pts (raw ${raw2}, prizes −${p2})\n\n🏆 Winner: ${winner}\n\n${lp}`;
+        const msg = `*${gd.title}*\n\n${gd.team1}: ${net1} pts (raw ${raw1}, prizes −${p1})\n${gd.team2}: ${net2} pts (raw ${raw2}, prizes −${p2})\n\n🏆 Winner: ${winner}\n\nOverall Series: ${gd.team1} [${gd.overall1}] - [${gd.overall2}] ${gd.team2}\n\n${lp}`;
         window.open("https://wa.me/?text=" + encodeURIComponent(msg), "_blank");
       }
 

@@ -1,67 +1,225 @@
+
 <!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Game Calculator</title>
+    <title>Score Sheet</title>
     <style>
-      @import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap");
+      @import url("https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300..700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap");
+
       :root {
-        --bg: #0f1117;
-        --surface: #1a1d27;
-        --surface2: #22263a;
-        --border: #2e3248;
-        --accent: #5b8dee;
-        --accent2: #3ecf8e;
-        --warn: #f59e0b;
-        --danger: #f43f5e;
-        --text: #e8eaf0;
-        --muted: #7b82a0;
-        --font: "DM Sans", sans-serif;
-        --mono: "DM Mono", monospace;
+        --bg: #101f19;
+        --surface: #172a20;
+        --surface2: #1e3528;
+        --surface3: #24402f;
+        --border: #2d4a38;
+        --border-soft: #223a2c;
+        --accent: #e3bd5f;
+        --accent-dim: #b99a4c;
+        --accent2: #6fb09b;
+        --accent2-dim: #588f7d;
+        --warn: #b17a42;
+        --danger: #c2536a;
+        --text: #f2ede1;
+        --muted: #82998c;
+        --muted-dim: #5b6e63;
+        --font-display: "Fraunces", serif;
+        --font: "Inter", sans-serif;
+        --mono: "JetBrains Mono", monospace;
+        --radius: 16px;
       }
       * {
         box-sizing: border-box;
         margin: 0;
         padding: 0;
       }
+      html {
+        -webkit-tap-highlight-color: transparent;
+      }
       body {
         font-family: var(--font);
         background: var(--bg);
         color: var(--text);
         min-height: 100vh;
-        padding: 16px;
+        padding: 14px;
+        position: relative;
+        overflow-x: hidden;
       }
-      h1 {
-        font-size: 22px;
-        font-weight: 600;
-        text-align: center;
-        margin-bottom: 16px;
-        letter-spacing: -0.3px;
-      }
-      h1 span {
+      body::before {
+        content: "♣";
+        position: fixed;
+        top: -60px;
+        right: -40px;
+        font-size: 320px;
         color: var(--accent);
+        opacity: 0.035;
+        font-family: var(--font-display);
+        pointer-events: none;
+        z-index: 0;
+        line-height: 1;
       }
+      body::after {
+        content: "♦";
+        position: fixed;
+        bottom: -80px;
+        left: -60px;
+        font-size: 280px;
+        color: var(--accent2);
+        opacity: 0.03;
+        font-family: var(--font-display);
+        pointer-events: none;
+        z-index: 0;
+        line-height: 1;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          animation-duration: 0.001ms !important;
+          transition-duration: 0.001ms !important;
+        }
+      }
+      :focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+
+      /* ─── Header ────────────────────────────────────────────────── */
+      .app-header {
+        position: relative;
+        z-index: 1;
+        text-align: center;
+        padding: 6px 0 18px;
+      }
+      .app-eyebrow {
+        font-size: 11px;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--muted-dim);
+        font-weight: 600;
+        margin-bottom: 4px;
+      }
+      .app-title {
+        font-family: var(--font-display);
+        font-optical-sizing: auto;
+        font-style: italic;
+        font-weight: 500;
+        font-size: 30px;
+        letter-spacing: -0.01em;
+        color: var(--text);
+      }
+      .app-title .suit {
+        color: var(--accent);
+        font-style: normal;
+      }
+      .save-status {
+        position: fixed;
+        top: 10px;
+        right: 12px;
+        z-index: 50;
+        font-size: 11px;
+        font-family: var(--mono);
+        color: var(--muted-dim);
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        background: rgba(23, 42, 32, 0.85);
+        backdrop-filter: blur(6px);
+        padding: 5px 10px 5px 8px;
+        border-radius: 20px;
+        border: 1px solid var(--border-soft);
+        transition: color 0.2s;
+      }
+      .save-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--muted-dim);
+        transition: background 0.2s;
+      }
+      .save-status.pending .save-dot {
+        background: var(--accent);
+        animation: pulseDot 1s ease-in-out infinite;
+      }
+      .save-status.saved .save-dot {
+        background: var(--accent2);
+      }
+      .save-status.error {
+        color: var(--danger);
+      }
+      .save-status.error .save-dot {
+        background: var(--danger);
+      }
+      @keyframes pulseDot {
+        50% {
+          opacity: 0.35;
+        }
+      }
+
+      /* ─── Loading overlay ───────────────────────────────────────── */
+      #loadOverlay {
+        position: fixed;
+        inset: 0;
+        background: var(--bg);
+        z-index: 100;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 14px;
+        transition: opacity 0.35s ease;
+      }
+      #loadOverlay.hidden {
+        opacity: 0;
+        pointer-events: none;
+      }
+      .load-spinner {
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        border: 3px solid var(--border);
+        border-top-color: var(--accent);
+        animation: spin 0.8s linear infinite;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      .load-label {
+        font-family: var(--font-display);
+        font-style: italic;
+        color: var(--muted);
+        font-size: 15px;
+      }
+
+      /* ─── Card ──────────────────────────────────────────────────── */
       .card {
+        position: relative;
+        z-index: 1;
         background: var(--surface);
-        border: 1px solid var(--border);
-        border-radius: 14px;
+        border: 1px solid var(--border-soft);
+        border-radius: var(--radius);
         padding: 18px;
         margin-bottom: 14px;
+        box-shadow: 0 1px 0 rgba(255, 255, 255, 0.02) inset;
       }
       .section-label {
         font-size: 11px;
         font-weight: 600;
         color: var(--muted);
         text-transform: uppercase;
-        letter-spacing: 0.08em;
+        letter-spacing: 0.09em;
         margin-bottom: 12px;
       }
+
+      /* ─── Settings ──────────────────────────────────────────────── */
       .settings-grid {
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 10px;
-        margin-bottom: 14px;
+        margin-bottom: 12px;
       }
       .settings-grid .full {
         grid-column: 1/-1;
@@ -70,8 +228,9 @@
         display: flex;
         flex-direction: column;
         gap: 5px;
-        font-size: 13px;
+        font-size: 12.5px;
         color: var(--muted);
+        font-weight: 500;
       }
       input[type="text"],
       input[type="number"] {
@@ -89,42 +248,56 @@
       input:focus {
         border-color: var(--accent);
       }
-
-      /* Compact Settings specific styles */
-      .settings-card {
-        padding: 12px 14px;
-        margin-bottom: 12px;
-      }
-      .settings-card .settings-grid {
-        gap: 8px;
-        margin-bottom: 8px;
-      }
-      .settings-card input[type="text"],
-      .settings-card input[type="number"] {
-        padding: 7px 9px;
-        font-size: 13px;
-        border-radius: 7px;
-      }
-      .settings-card .section-label {
-        margin-bottom: 8px;
-      }
-      .settings-card .btn {
-        padding: 7px 12px;
+      .players-toggle {
+        background: none;
+        border: none;
+        color: var(--accent2);
         font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        font-family: var(--font);
+        padding: 4px 0;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        margin-bottom: 10px;
+      }
+      .players-toggle .chevron {
+        transition: transform 0.2s;
+        font-size: 10px;
+      }
+      .players-toggle.open .chevron {
+        transform: rotate(90deg);
+      }
+      .players-panel {
+        display: none;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin-bottom: 12px;
+        padding: 12px;
+        background: var(--surface2);
+        border-radius: 10px;
+        border: 1px dashed var(--border);
+      }
+      .players-panel.open {
+        display: grid;
       }
 
-      /* Button Styles */
+      /* ─── Buttons ───────────────────────────────────────────────── */
       .btn {
         background: var(--surface2);
         border: 1px solid var(--border);
         color: var(--text);
         padding: 10px 14px;
-        border-radius: 9px;
+        border-radius: 10px;
         cursor: pointer;
         font-family: var(--font);
-        font-size: 14px;
-        font-weight: 500;
-        transition: all 0.15s;
+        font-size: 13.5px;
+        font-weight: 600;
+        transition:
+          transform 0.08s,
+          border-color 0.15s,
+          background 0.15s;
         display: inline-flex;
         align-items: center;
         justify-content: center;
@@ -132,38 +305,41 @@
         outline: none;
       }
       .btn:hover {
-        border-color: var(--muted);
+        border-color: var(--muted-dim);
+      }
+      .btn:active {
+        transform: scale(0.97);
       }
       .btn-accent {
         background: var(--accent);
-        color: #fff;
+        color: #221a06;
         border-color: var(--accent);
       }
       .btn-accent:hover {
-        background: #4778d9;
-        border-color: #4778d9;
+        background: var(--accent-dim);
+        border-color: var(--accent-dim);
       }
       .btn-green {
         background: var(--accent2);
-        color: #fff;
+        color: #0d221b;
         border-color: var(--accent2);
       }
       .btn-green:hover {
-        background: #32b57c;
-        border-color: #32b57c;
+        background: var(--accent2-dim);
+        border-color: var(--accent2-dim);
       }
       .btn-danger {
-        background: rgba(244, 63, 94, 0.1);
+        background: rgba(194, 83, 106, 0.1);
         color: var(--danger);
-        border-color: rgba(244, 63, 94, 0.3);
+        border-color: rgba(194, 83, 106, 0.3);
       }
       .btn-danger:hover {
-        background: rgba(244, 63, 94, 0.2);
+        background: rgba(194, 83, 106, 0.2);
       }
       .btn-sm {
         padding: 6px 10px;
         font-size: 12px;
-        border-radius: 6px;
+        border-radius: 7px;
       }
       .btn-bar {
         display: flex;
@@ -175,150 +351,176 @@
         min-width: 120px;
       }
 
-      /* General Scoreboard */
-      .overall-box {
-        background: var(--surface2);
-        border: 1px solid var(--border);
-        border-radius: 10px;
-        padding: 10px 12px;
-        margin-bottom: 18px;
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
+      /* ─── Hero scoreboard ───────────────────────────────────────── */
+      .hero-tally {
+        position: relative;
+        border-radius: var(--radius);
+        border: 1px solid var(--border-soft);
+        background: linear-gradient(160deg, var(--surface2), var(--surface));
+        padding: 18px 14px 14px;
+        margin-bottom: 14px;
+        overflow: hidden;
       }
-
-      .overall-box-header {
-        font-size: 11px;
-        font-weight: 600;
-        color: var(--muted);
+      .hero-eyebrow {
+        text-align: center;
+        font-size: 10.5px;
+        font-weight: 700;
+        letter-spacing: 0.16em;
         text-transform: uppercase;
-        letter-spacing: 0.05em;
+        color: var(--muted-dim);
+        margin-bottom: 12px;
       }
-
-      .overall-controls {
+      .hero-row {
         display: flex;
-        gap: 10px;
+        align-items: stretch;
       }
-
-      .ov-team-ctrl {
+      .hero-team {
         flex: 1;
         display: flex;
+        flex-direction: column;
         align-items: center;
-        justify-content: center;
-        gap: 8px;
-        background: var(--surface);
-        border: 1px solid var(--border);
-        border-radius: 8px;
-        padding: 8px;
+        gap: 6px;
         min-width: 0;
+        padding: 0 6px;
       }
-
-      .ov-team-ctrl span:first-child {
+      .hero-team-name {
+        font-size: 12.5px;
+        font-weight: 600;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
-        max-width: 90px;
-        font-size: 12px;
-        font-weight: 600;
+        max-width: 100%;
       }
-
-      .ov-btn {
-        background: var(--surface2);
+      .hero-team.t1 .hero-team-name {
+        color: var(--accent);
+      }
+      .hero-team.t2 .hero-team-name {
+        color: var(--accent2);
+      }
+      .hero-score {
+        font-family: var(--font-display);
+        font-weight: 600;
+        font-size: 44px;
+        line-height: 1;
+        letter-spacing: -0.01em;
+        font-variant-numeric: tabular-nums;
+      }
+      .hero-team.t1 .hero-score {
+        color: var(--accent);
+      }
+      .hero-team.t2 .hero-score {
+        color: var(--accent2);
+      }
+      .hero-stepper {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-top: 2px;
+      }
+      .hero-btn {
+        background: var(--surface3);
         border: 1px solid var(--border);
         color: var(--text);
-        border-radius: 5px;
-        width: 28px;
-        height: 28px;
+        border-radius: 7px;
+        width: 30px;
+        height: 30px;
         display: flex;
         align-items: center;
         justify-content: center;
         cursor: pointer;
-        font-size: 15px;
+        font-size: 16px;
+        font-weight: 600;
         transition:
           background 0.15s,
-          transform 0.1s;
-        flex-shrink: 0;
+          transform 0.08s;
       }
-
-      .ov-btn:hover {
+      .hero-btn:hover {
         background: var(--border);
       }
-
-      .ov-btn:active {
-        transform: scale(0.95);
+      .hero-btn:active {
+        transform: scale(0.9);
+      }
+      .hero-divider {
+        width: 1px;
+        background: var(--border);
+        margin: 4px 0;
+        position: relative;
+      }
+      .hero-divider::before {
+        content: "♠";
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: var(--surface2);
+        color: var(--muted-dim);
+        font-size: 13px;
+        padding: 4px 0;
+        font-family: var(--font-display);
       }
 
-      /* Mobile Optimization */
-      @media (max-width: 520px) {
-        .overall-controls {
-          flex-direction: column;
-        }
-
-        .ov-team-ctrl {
-          justify-content: space-between;
-          padding: 10px 12px;
-        }
-
-        .ov-team-ctrl span:first-child {
-          max-width: 140px;
-          font-size: 13px;
-        }
-
-        #ov1ScoreDisplay,
-        #ov2ScoreDisplay {
-          font-size: 18px !important;
-        }
-
-        .ov-btn {
-          width: 32px;
-          height: 32px;
-          font-size: 17px;
-        }
-      }
-
-      /* Tabs */
+      /* ─── Tabs ──────────────────────────────────────────────────── */
       .tab-bar {
         display: flex;
         gap: 2px;
         background: var(--surface2);
-        border-radius: 10px;
+        border-radius: 11px;
         padding: 3px;
         margin-bottom: 16px;
         overflow-x: auto;
       }
       .tab {
         flex: 1;
-        min-width: 60px;
-        padding: 8px 6px;
-        font-size: 12px;
-        font-weight: 500;
+        min-width: 58px;
+        padding: 8px 4px;
+        font-size: 11.5px;
+        font-weight: 600;
         text-align: center;
-        border-radius: 8px;
+        border-radius: 9px;
         cursor: pointer;
         color: var(--muted);
         transition: all 0.15s;
         border: none;
         background: none;
         font-family: var(--font);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 2px;
+      }
+      .tab .tab-glyph {
+        font-family: var(--font-display);
+        font-size: 14px;
       }
       .tab.active {
         background: var(--surface);
         color: var(--text);
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
       }
       .tab-content {
         display: none;
+        animation: fadeIn 0.2s ease;
       }
       .tab-content.active {
         display: block;
       }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(3px);
+        }
+        to {
+          opacity: 1;
+          transform: none;
+        }
+      }
 
-      /* Score table */
+      /* ─── Score table ───────────────────────────────────────────── */
       .score-wrap {
         max-height: 420px;
         overflow-y: auto;
         border-radius: 10px;
-        border: 1px solid var(--border);
+        border: 1px solid var(--border-soft);
       }
       .score-wrap::-webkit-scrollbar {
         width: 4px;
@@ -335,37 +537,38 @@
       th {
         padding: 10px 8px;
         text-align: center;
-        font-size: 11px;
-        font-weight: 600;
+        font-size: 10.5px;
+        font-weight: 700;
         color: var(--muted);
         text-transform: uppercase;
-        letter-spacing: 0.05em;
+        letter-spacing: 0.06em;
         background: var(--surface);
         position: sticky;
         top: 0;
         z-index: 1;
       }
       td {
-        padding: 5px 6px;
+        padding: 4px 6px;
         text-align: center;
-        border-top: 1px solid var(--border);
+        border-top: 1px solid var(--border-soft);
       }
       .round-num {
-        color: var(--muted);
+        color: var(--muted-dim);
         font-family: var(--mono);
-        font-size: 13px;
-        width: 54px;
+        font-size: 12.5px;
+        width: 50px;
       }
       td input {
-        background: var(--surface2);
-        border: 1px solid var(--border);
-        border-radius: 7px;
+        background: transparent;
+        border: none;
+        border-bottom: 1.5px solid var(--border);
+        border-radius: 0;
         color: var(--text);
-        padding: 6px;
-        font-size: 14px;
+        padding: 7px 4px;
+        font-size: 14.5px;
         font-family: var(--mono);
         text-align: center;
-        width: 80px;
+        width: 76px;
         outline: none;
         transition: border-color 0.15s;
       }
@@ -373,25 +576,40 @@
         border-color: var(--accent);
       }
       tr.prize-marked td {
-        background: rgba(91, 141, 238, 0.05);
+        background: rgba(227, 189, 95, 0.05);
       }
       tr.prize-marked .round-num {
         color: var(--accent);
       }
+      .hint-text {
+        font-size: 12px;
+        color: var(--muted-dim);
+        text-align: center;
+        margin-top: 10px;
+      }
 
-      /* Prize section */
+      /* ─── Prize section ─────────────────────────────────────────── */
       .prize-team-block {
         margin-bottom: 18px;
+      }
+      .prize-team-block:last-child {
+        margin-bottom: 0;
       }
       .prize-team-header {
         display: flex;
         align-items: center;
         justify-content: space-between;
         margin-bottom: 10px;
+        gap: 10px;
       }
       .prize-team-name {
-        font-weight: 600;
-        font-size: 15px;
+        font-weight: 700;
+        font-size: 14.5px;
+      }
+      .prize-meta {
+        font-size: 11.5px;
+        color: var(--muted);
+        margin-top: 3px;
       }
       .prize-list {
         display: flex;
@@ -403,8 +621,8 @@
         align-items: center;
         justify-content: space-between;
         background: var(--surface2);
-        border: 1px solid var(--border);
-        border-radius: 8px;
+        border: 1px solid var(--border-soft);
+        border-radius: 9px;
         padding: 8px 12px;
         font-size: 13px;
       }
@@ -414,11 +632,9 @@
         gap: 8px;
       }
       .prize-dot {
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-        background: var(--accent);
-        flex-shrink: 0;
+        color: var(--accent);
+        font-family: var(--font-display);
+        font-size: 13px;
       }
       .prize-round-label {
         color: var(--muted);
@@ -429,8 +645,8 @@
         background: none;
         border: none;
         cursor: pointer;
-        color: var(--muted);
-        font-size: 16px;
+        color: var(--muted-dim);
+        font-size: 15px;
         padding: 2px 4px;
         border-radius: 5px;
         transition: color 0.15s;
@@ -439,13 +655,28 @@
         color: var(--danger);
       }
       .prize-empty {
-        color: var(--muted);
+        color: var(--muted-dim);
         font-size: 13px;
         text-align: center;
         padding: 16px 0;
+        font-style: italic;
+        font-family: var(--font-display);
       }
 
-      /* Paycheck — 4 player grid */
+      /* ─── Paycheck ──────────────────────────────────────────────── */
+      .last-payer-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 14px;
+        gap: 10px;
+      }
+      .last-payer-badge {
+        font-size: 13.5px;
+        font-weight: 600;
+        color: var(--warn);
+        font-family: var(--mono);
+      }
       .players-grid {
         display: grid;
         grid-template-columns: 1fr 1fr;
@@ -454,22 +685,24 @@
       }
       .player-block {
         background: var(--surface2);
-        border: 1px solid var(--border);
+        border: 1px solid var(--border-soft);
         border-radius: 12px;
         padding: 14px;
+        transition: border-color 0.2s;
       }
       .player-block.last-paid-block {
         border-color: var(--warn);
-        background: rgba(245, 158, 11, 0.06);
+        background: rgba(177, 122, 66, 0.07);
       }
       .player-block-header {
         display: flex;
-        align-items: center;
+        align-items: flex-start;
         justify-content: space-between;
         margin-bottom: 10px;
+        gap: 6px;
       }
       .player-name-display {
-        font-weight: 600;
+        font-weight: 700;
         font-size: 14px;
       }
       .player-team-tag {
@@ -479,19 +712,20 @@
       }
       .last-paid-chip {
         font-size: 10px;
-        font-weight: 600;
+        font-weight: 700;
         padding: 2px 7px;
         border-radius: 20px;
-        background: rgba(245, 158, 11, 0.2);
+        background: rgba(177, 122, 66, 0.2);
         color: var(--warn);
-        border: 1px solid rgba(245, 158, 11, 0.4);
+        border: 1px solid rgba(177, 122, 66, 0.4);
+        white-space: nowrap;
       }
       .player-pay-btn {
         width: 100%;
         padding: 9px;
-        font-size: 13px;
-        font-weight: 500;
-        background: var(--surface);
+        font-size: 12.5px;
+        font-weight: 600;
+        background: var(--surface3);
         border: 1px solid var(--border);
         border-radius: 9px;
         color: var(--text);
@@ -504,21 +738,24 @@
         border-color: var(--warn);
         color: var(--warn);
       }
+      .player-pay-btn:active {
+        transform: scale(0.97);
+      }
       .player-pay-btn.active-payer {
         border-color: var(--warn);
-        background: rgba(245, 158, 11, 0.1);
+        background: rgba(177, 122, 66, 0.12);
         color: var(--warn);
       }
       .player-mini-log {
-        font-size: 11px;
-        color: var(--muted);
+        font-size: 10.5px;
+        color: var(--muted-dim);
         font-family: var(--mono);
-        max-height: 70px;
+        max-height: 62px;
         overflow-y: auto;
       }
       .player-mini-log-entry {
         padding: 2px 0;
-        border-top: 1px solid var(--border);
+        border-top: 1px solid var(--border-soft);
         margin-top: 3px;
       }
       .player-mini-log-entry:first-child {
@@ -544,32 +781,29 @@
         align-items: center;
         justify-content: space-between;
         background: var(--surface2);
-        border-radius: 7px;
+        border-radius: 8px;
         padding: 7px 10px;
         font-size: 13px;
-        border: 1px solid var(--border);
-      }
-      .pay-entry-left {
-        display: flex;
-        align-items: center;
-        gap: 8px;
+        border: 1px solid var(--border-soft);
       }
       .pay-entry-team {
-        font-weight: 500;
+        font-weight: 600;
       }
       .pay-entry-meta {
-        color: var(--muted);
-        font-size: 12px;
+        color: var(--muted-dim);
+        font-size: 11.5px;
         font-family: var(--mono);
       }
       .pay-empty {
-        color: var(--muted);
+        color: var(--muted-dim);
         font-size: 13px;
         text-align: center;
         padding: 14px 0;
+        font-style: italic;
+        font-family: var(--font-display);
       }
 
-      /* Result */
+      /* ─── Result ────────────────────────────────────────────────── */
       .result-cards {
         display: grid;
         grid-template-columns: 1fr 1fr;
@@ -578,41 +812,42 @@
       }
       .result-card {
         background: var(--surface2);
-        border: 1px solid var(--border);
+        border: 1px solid var(--border-soft);
         border-radius: 12px;
         padding: 16px;
         text-align: center;
       }
       .result-card.winner {
         border-color: var(--accent2);
-        background: rgba(62, 207, 142, 0.07);
+        background: rgba(111, 176, 155, 0.08);
       }
       .result-team {
-        font-size: 13px;
+        font-size: 12.5px;
         color: var(--muted);
         margin-bottom: 6px;
-        font-weight: 500;
+        font-weight: 600;
       }
       .result-score {
-        font-size: 28px;
+        font-size: 30px;
         font-weight: 600;
-        font-family: var(--mono);
-        letter-spacing: -1px;
+        font-family: var(--font-display);
+        letter-spacing: -0.01em;
       }
       .result-detail {
         font-size: 11px;
-        color: var(--muted);
+        color: var(--muted-dim);
         margin-top: 6px;
         font-family: var(--mono);
       }
       .winner-banner {
-        background: rgba(62, 207, 142, 0.1);
-        border: 1px solid rgba(62, 207, 142, 0.3);
-        border-radius: 10px;
+        background: rgba(111, 176, 155, 0.1);
+        border: 1px solid rgba(111, 176, 155, 0.3);
+        border-radius: 11px;
         padding: 14px;
         text-align: center;
         font-size: 16px;
         font-weight: 600;
+        font-family: var(--font-display);
         color: var(--accent2);
         margin-bottom: 14px;
         display: none;
@@ -620,11 +855,23 @@
       .winner-banner.show {
         display: block;
       }
+      .result-empty {
+        text-align: center;
+        padding: 30px 10px;
+        color: var(--muted-dim);
+      }
+      .result-empty .glyph {
+        font-family: var(--font-display);
+        font-size: 30px;
+        display: block;
+        margin-bottom: 8px;
+        color: var(--muted);
+      }
       .running-wrap {
         max-height: 280px;
         overflow-y: auto;
         border-radius: 10px;
-        border: 1px solid var(--border);
+        border: 1px solid var(--border-soft);
       }
       .running-wrap::-webkit-scrollbar {
         width: 4px;
@@ -640,13 +887,10 @@
         color: var(--accent2);
       }
       .tie-c {
-        color: var(--muted);
+        color: var(--muted-dim);
       }
 
-      /* Graphs */
-      .graph-section {
-        margin-top: 16px;
-      }
+      /* ─── Graphs ────────────────────────────────────────────────── */
       .graph-status {
         font-size: 13px;
         color: var(--muted);
@@ -671,68 +915,182 @@
       .graph-img-wrap img {
         width: 100%;
         border-radius: 10px;
-        border: 1px solid var(--border);
+        border: 1px solid var(--border-soft);
         display: none;
       }
       .graph-img-wrap img.loaded {
         display: block;
       }
+
+      /* ─── Modal ─────────────────────────────────────────────────── */
+      .modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(8, 15, 11, 0.72);
+        backdrop-filter: blur(3px);
+        z-index: 200;
+        display: none;
+        align-items: flex-end;
+        justify-content: center;
+        padding: 0;
+      }
+      .modal-overlay.show {
+        display: flex;
+        animation: fadeIn 0.15s ease;
+      }
+      .modal-box {
+        background: var(--surface);
+        border: 1px solid var(--border-soft);
+        border-radius: 18px 18px 0 0;
+        padding: 20px 18px calc(18px + env(safe-area-inset-bottom));
+        width: 100%;
+        max-width: 480px;
+        animation: slideUp 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
+      }
+      @media (min-width: 560px) {
+        .modal-overlay {
+          align-items: center;
+        }
+        .modal-box {
+          border-radius: 16px;
+        }
+      }
+      @keyframes slideUp {
+        from {
+          transform: translateY(24px);
+          opacity: 0;
+        }
+        to {
+          transform: none;
+          opacity: 1;
+        }
+      }
+      .modal-title {
+        font-family: var(--font-display);
+        font-style: italic;
+        font-size: 18px;
+        margin-bottom: 8px;
+      }
+      .modal-body {
+        font-size: 13.5px;
+        color: var(--muted);
+        line-height: 1.5;
+        margin-bottom: 14px;
+      }
+      .modal-input {
+        margin-bottom: 14px;
+      }
+      .modal-actions {
+        display: flex;
+        gap: 10px;
+        justify-content: flex-end;
+      }
+      .modal-actions .btn {
+        flex: none;
+        min-width: 90px;
+      }
+
+      /* ─── Toast ─────────────────────────────────────────────────── */
+      .toast {
+        position: fixed;
+        bottom: 18px;
+        left: 50%;
+        transform: translateX(-50%) translateY(20px);
+        background: var(--surface3);
+        border: 1px solid var(--border);
+        color: var(--text);
+        padding: 11px 18px;
+        border-radius: 30px;
+        font-size: 13px;
+        font-weight: 500;
+        z-index: 300;
+        opacity: 0;
+        pointer-events: none;
+        transition:
+          opacity 0.2s,
+          transform 0.2s;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+      }
+      .toast.show {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+      }
+
+      /* ─── Mobile tweaks ─────────────────────────────────────────── */
+      @media (max-width: 380px) {
+        .hero-score {
+          font-size: 34px;
+        }
+        .app-title {
+          font-size: 25px;
+        }
+      }
     </style>
   </head>
   <body>
-    <h1>🎯 Game <span>Calculator</span></h1>
+    <div id="loadOverlay">
+      <div class="load-spinner"></div>
+      <div class="load-label">Shuffling the deck…</div>
+    </div>
 
-    <div class="card">
-      <div class="overall-box">
-        <div class="overall-box-header">General Scoreboard</div>
+    <div class="save-status" id="saveStatus">
+      <span class="save-dot"></span>
+      <span id="saveStatusText">Synced</span>
+    </div>
 
-        <div class="overall-controls">
-          <div class="ov-team-ctrl">
-            <span id="ov1NameDisplay" style="color: var(--accent)">
-              Team 1
-            </span>
+    <header class="app-header">
+      <div class="app-eyebrow">Table Tracker</div>
+      <div class="app-title"><span class="suit">♠</span> Score Sheet</div>
+    </header>
 
-            <button class="ov-btn" onclick="updOverall(1, -1)">-</button>
-
-            <span
-              id="ov1ScoreDisplay"
-              style="
-                font-family: var(--mono);
-                font-size: 16px;
-                width: 18px;
-                text-align: center;
-              "
+    <div class="hero-tally">
+      <div class="hero-eyebrow">Series score</div>
+      <div class="hero-row">
+        <div class="hero-team t1">
+          <div class="hero-team-name" id="ov1NameDisplay">Team 1</div>
+          <div class="hero-score" id="ov1ScoreDisplay">0</div>
+          <div class="hero-stepper">
+            <button
+              class="hero-btn"
+              onclick="updOverall(1, -1)"
+              aria-label="Decrease Team 1 series score"
             >
-              0
-            </span>
-
-            <button class="ov-btn" onclick="updOverall(1, 1)">+</button>
+              &minus;
+            </button>
+            <button
+              class="hero-btn"
+              onclick="updOverall(1, 1)"
+              aria-label="Increase Team 1 series score"
+            >
+              +
+            </button>
           </div>
-
-          <div class="ov-team-ctrl">
-            <span id="ov2NameDisplay" style="color: var(--accent2)">
-              Team 2
-            </span>
-
-            <button class="ov-btn" onclick="updOverall(2, -1)">-</button>
-
-            <span
-              id="ov2ScoreDisplay"
-              style="
-                font-family: var(--mono);
-                font-size: 16px;
-                width: 18px;
-                text-align: center;
-              "
+        </div>
+        <div class="hero-divider"></div>
+        <div class="hero-team t2">
+          <div class="hero-team-name" id="ov2NameDisplay">Team 2</div>
+          <div class="hero-score" id="ov2ScoreDisplay">0</div>
+          <div class="hero-stepper">
+            <button
+              class="hero-btn"
+              onclick="updOverall(2, -1)"
+              aria-label="Decrease Team 2 series score"
             >
-              0
-            </span>
-
-            <button class="ov-btn" onclick="updOverall(2, 1)">+</button>
+              &minus;
+            </button>
+            <button
+              class="hero-btn"
+              onclick="updOverall(2, 1)"
+              aria-label="Increase Team 2 series score"
+            >
+              +
+            </button>
           </div>
         </div>
       </div>
+    </div>
 
+    <div class="card">
       <p class="section-label">Settings</p>
       <div class="settings-grid">
         <label class="field full"
@@ -766,7 +1124,16 @@
         /></label>
       </div>
 
-      <div style="display: none">
+      <button
+        type="button"
+        class="players-toggle"
+        id="playersToggleBtn"
+        onclick="togglePlayersPanel()"
+      >
+        <span class="chevron">&#9654;</span>
+        Edit player names (used on the Paycheck tab)
+      </button>
+      <div class="players-panel" id="playersPanel">
         <label class="field"
           >Player 1 (Team 1)<input
             type="text"
@@ -800,7 +1167,7 @@
       <button
         class="btn btn-accent"
         onclick="applySettings()"
-        style="margin-top: 4px"
+        style="margin-top: 4px; width: 100%"
       >
         &#10003; Apply settings
       </button>
@@ -808,19 +1175,30 @@
 
     <div class="card">
       <div class="tab-bar">
-        <button class="tab active" onclick="switchTab('scores')">Scores</button>
-        <button class="tab" onclick="switchTab('prizes')">Prizes</button>
-        <button class="tab" onclick="switchTab('paycheck')">Paycheck</button>
-        <button class="tab" onclick="switchTab('result')">Result</button>
-        <button class="tab" onclick="switchTab('graphs')">Graphs</button>
+        <button class="tab active" onclick="switchTab('scores')">
+          <span class="tab-glyph">♠</span>Scores
+        </button>
+        <button class="tab" onclick="switchTab('prizes')">
+          <span class="tab-glyph">♦</span>Prizes
+        </button>
+        <button class="tab" onclick="switchTab('paycheck')">
+          <span class="tab-glyph">♣</span>Paycheck
+        </button>
+        <button class="tab" onclick="switchTab('result')">
+          <span class="tab-glyph">♥</span>Result
+        </button>
+        <button class="tab" onclick="switchTab('graphs')">
+          <span class="tab-glyph">▤</span>Graphs
+        </button>
       </div>
 
       <div id="tab-scores" class="tab-content active">
         <div
           style="
             text-align: center;
-            font-size: 17px;
-            font-weight: 600;
+            font-family: var(--font-display);
+            font-style: italic;
+            font-size: 18px;
             margin-bottom: 14px;
           "
           id="gameTitleDisplay"
@@ -839,41 +1217,24 @@
             <tbody id="scoreBody"></tbody>
           </table>
         </div>
-        <p
-          style="
-            font-size: 12px;
-            color: var(--muted);
-            text-align: center;
-            margin-top: 10px;
-          "
-        >
-          Negative values supported &mdash; rounds with prizes are highlighted
-          🏆
+        <p class="hint-text">
+          Negative values supported &mdash; rounds with prizes are highlighted 🏆
         </p>
       </div>
 
       <div id="tab-prizes" class="tab-content">
         <p class="section-label">
-          Each prize deducts 100 pts &mdash; round is recorded when you add
+          Each prize deducts 100 pts &mdash; the round is recorded when you add
+          one
         </p>
         <div id="prizeSection"></div>
       </div>
 
       <div id="tab-paycheck" class="tab-content">
-        <div
-          style="
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 14px;
-          "
-        >
+        <div class="last-payer-row">
           <div>
             <p class="section-label" style="margin-bottom: 4px">Last payer</p>
-            <div
-              id="lastPayerBadge"
-              style="font-size: 14px; font-weight: 600; color: var(--warn)"
-            >
+            <div class="last-payer-badge" id="lastPayerBadge">
               — No record yet
             </div>
           </div>
@@ -891,20 +1252,11 @@
 
       <div id="tab-result" class="tab-content">
         <div class="winner-banner" id="winnerBanner"></div>
-        <div class="result-cards" id="resultCards"></div>
-        <p class="section-label">Cumulative score by round</p>
-        <div class="running-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Round</th>
-                <th id="rth1">Team 1</th>
-                <th id="rth2">Team 2</th>
-                <th>Lead</th>
-              </tr>
-            </thead>
-            <tbody id="runningBody"></tbody>
-          </table>
+        <div id="resultBody">
+          <div class="result-empty">
+            <span class="glyph">♥</span>
+            Tap Calculate to settle the round.
+          </div>
         </div>
       </div>
 
@@ -919,7 +1271,7 @@
               placeholder="https://your-server.com"
           /></label>
           <button class="btn btn-accent" onclick="generateGraphs()">
-            &#128202; Generate graphs
+            &#128202; Generate
           </button>
         </div>
         <div id="graphStatus" class="graph-status" style="display: none"></div>
@@ -948,9 +1300,25 @@
       </div>
     </div>
 
-    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+    <!-- Modal -->
+    <div class="modal-overlay" id="modalOverlay">
+      <div class="modal-box">
+        <div class="modal-title" id="modalTitle">Title</div>
+        <div class="modal-body" id="modalBody">Body</div>
+        <input type="text" class="modal-input" id="modalInput" style="display: none" />
+        <div class="modal-actions">
+          <button class="btn" id="modalCancelBtn">Cancel</button>
+          <button class="btn btn-accent" id="modalConfirmBtn">OK</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script>
-      // ─── State ───────────────────────────────────────────────────────────────────
+      // ─── State ─────────────────────────────────────────────────────────────
+      const STORAGE_KEY = "game-data";
       let gd = {
         title: "Game-1",
         team1: "Yusuf-Yüksel",
@@ -959,29 +1327,100 @@
         s1: Array(21).fill(0),
         s2: Array(21).fill(0),
         prizes: [],
-        // paylog entries: {playerId:1-4, playerName, team:1|2, ts, id}
         paylog: [],
-        // player names
         players: ["Yusuf", "Yüksel", "Ahmet", "Mete"],
-        // Overall wins
         overall1: 0,
         overall2: 0,
       };
 
-      // ─── Persist ─────────────────────────────────────────────────────────────────
-      function save() {
-        localStorage.setItem("sgc4", JSON.stringify(gd));
+      // ─── Modal helper (replaces prompt/confirm/alert) ─────────────────────
+      function modal({ title, body, withInput = false, inputValue = "", confirmText = "OK", cancelText = "Cancel", danger = false, alertOnly = false }) {
+        return new Promise((resolve) => {
+          const overlay = document.getElementById("modalOverlay");
+          const inputEl = document.getElementById("modalInput");
+          const confirmBtn = document.getElementById("modalConfirmBtn");
+          const cancelBtn = document.getElementById("modalCancelBtn");
+
+          document.getElementById("modalTitle").textContent = title;
+          document.getElementById("modalBody").textContent = body || "";
+          inputEl.style.display = withInput ? "block" : "none";
+          inputEl.value = inputValue;
+          confirmBtn.textContent = confirmText;
+          confirmBtn.className = "btn " + (danger ? "btn-danger" : "btn-accent");
+          cancelBtn.style.display = alertOnly ? "none" : "inline-flex";
+
+          overlay.classList.add("show");
+          if (withInput) setTimeout(() => inputEl.focus(), 60);
+
+          function cleanup(result) {
+            overlay.classList.remove("show");
+            confirmBtn.onclick = null;
+            cancelBtn.onclick = null;
+            overlay.onclick = null;
+            resolve(result);
+          }
+          confirmBtn.onclick = () => cleanup(withInput ? inputEl.value : true);
+          cancelBtn.onclick = () => cleanup(null);
+          overlay.onclick = (e) => {
+            if (e.target === overlay && !alertOnly) cleanup(null);
+          };
+          if (withInput) {
+            inputEl.onkeydown = (e) => {
+              if (e.key === "Enter") cleanup(inputEl.value);
+            };
+          }
+        });
       }
-      function load() {
-        const s = localStorage.getItem("sgc4");
-        if (s) {
-          gd = JSON.parse(s);
-          if (!gd.players) gd.players = ["Yusuf", "Yüksel", "Ahmet", "Mete"];
-          if (gd.overall1 === undefined) gd.overall1 = 0;
-          if (gd.overall2 === undefined) gd.overall2 = 0;
+
+      function showToast(msg) {
+        const t = document.getElementById("toast");
+        t.textContent = msg;
+        t.classList.add("show");
+        clearTimeout(showToast._tm);
+        showToast._tm = setTimeout(() => t.classList.remove("show"), 2600);
+      }
+
+      // ─── Persistence (cloud key/value storage) ────────────────────────────
+      let saveTimer = null;
+      function setSaveStatus(state) {
+        const el = document.getElementById("saveStatus");
+        const txt = document.getElementById("saveStatusText");
+        el.className = "save-status " + state;
+        txt.textContent =
+          state === "pending" ? "Saving…" : state === "error" ? "Not saved" : "Synced";
+      }
+      function save() {
+        setSaveStatus("pending");
+        clearTimeout(saveTimer);
+        saveTimer = setTimeout(persist, 500);
+      }
+      async function persist() {
+        try {
+          await window.storage.set(STORAGE_KEY, JSON.stringify(gd), false);
+          setSaveStatus("saved");
+        } catch (err) {
+          console.error("Storage error:", err);
+          setSaveStatus("error");
+        }
+      }
+      async function load() {
+        try {
+          const result = await window.storage.get(STORAGE_KEY);
+          if (result && result.value) {
+            const parsed = JSON.parse(result.value);
+            gd = Object.assign({}, gd, parsed);
+            if (!gd.players || gd.players.length < 4)
+              gd.players = ["Yusuf", "Yüksel", "Ahmet", "Mete"];
+            if (gd.overall1 === undefined) gd.overall1 = 0;
+            if (gd.overall2 === undefined) gd.overall2 = 0;
+          }
+        } catch (err) {
+          // No saved game yet — start fresh with defaults.
         }
         syncInputs();
         render();
+        document.getElementById("loadOverlay").classList.add("hidden");
+        setSaveStatus("saved");
       }
       function syncInputs() {
         document.getElementById("gameTitleInput").value = gd.title;
@@ -993,42 +1432,38 @@
         renderOverallDisplay();
       }
 
-      // ─── Overall Scoreboard ──────────────────────────────────────────────────────
+      // ─── Players panel toggle ──────────────────────────────────────────────
+      function togglePlayersPanel() {
+        document.getElementById("playersPanel").classList.toggle("open");
+        document.getElementById("playersToggleBtn").classList.toggle("open");
+      }
+
+      // ─── Overall scoreboard ────────────────────────────────────────────────
       function updOverall(team, amount) {
         if (team === 1) gd.overall1 = Math.max(0, (gd.overall1 || 0) + amount);
         else gd.overall2 = Math.max(0, (gd.overall2 || 0) + amount);
         save();
         renderOverallDisplay();
       }
-
       function renderOverallDisplay() {
         document.getElementById("ov1NameDisplay").textContent = gd.team1;
         document.getElementById("ov2NameDisplay").textContent = gd.team2;
-        document.getElementById("ov1ScoreDisplay").textContent =
-          gd.overall1 || 0;
-        document.getElementById("ov2ScoreDisplay").textContent =
-          gd.overall2 || 0;
+        document.getElementById("ov1ScoreDisplay").textContent = gd.overall1 || 0;
+        document.getElementById("ov2ScoreDisplay").textContent = gd.overall2 || 0;
       }
 
-      // ─── Settings ────────────────────────────────────────────────────────────────
+      // ─── Settings ──────────────────────────────────────────────────────────
       function applySettings() {
         const newR = Math.max(
           1,
-          Math.min(
-            200,
-            parseInt(document.getElementById("roundsInput").value) || 21,
-          ),
+          Math.min(200, parseInt(document.getElementById("roundsInput").value) || 21),
         );
-        gd.title =
-          document.getElementById("gameTitleInput").value.trim() || "Game-1";
-        gd.team1 =
-          document.getElementById("team1Input").value.trim() || "Team 1";
-        gd.team2 =
-          document.getElementById("team2Input").value.trim() || "Team 2";
+        gd.title = document.getElementById("gameTitleInput").value.trim() || "Game-1";
+        gd.team1 = document.getElementById("team1Input").value.trim() || "Team 1";
+        gd.team2 = document.getElementById("team2Input").value.trim() || "Team 2";
         for (let i = 0; i < 4; i++)
           gd.players[i] =
-            document.getElementById(`p${i + 1}Input`).value.trim() ||
-            `Player ${i + 1}`;
+            document.getElementById(`p${i + 1}Input`).value.trim() || `Player ${i + 1}`;
 
         if (newR !== gd.rounds) {
           if (newR > gd.rounds) {
@@ -1043,9 +1478,10 @@
         }
         save();
         render();
+        showToast("Settings applied");
       }
 
-      // ─── Render all ──────────────────────────────────────────────────────────────
+      // ─── Render all ────────────────────────────────────────────────────────
       function render() {
         document.getElementById("gameTitleDisplay").textContent = gd.title;
         document.getElementById("th1").textContent = gd.team1;
@@ -1056,13 +1492,14 @@
         renderPaycheck();
       }
 
-      // ─── Scores ──────────────────────────────────────────────────────────────────
+      // ─── Scores ────────────────────────────────────────────────────────────
       function roundHasPrize(r) {
         return gd.prizes.some((p) => p.round === r);
       }
       function renderScores() {
         const tb = document.getElementById("scoreBody");
         tb.innerHTML = "";
+        const frag = document.createDocumentFragment();
         for (let i = 0; i < gd.rounds; i++) {
           const r = i + 1,
             hp = roundHasPrize(r);
@@ -1071,8 +1508,9 @@
           tr.innerHTML = `<td class="round-num">${r}${hp ? " 🏆" : ""}</td>
       <td><input type="text" inputmode="text" value="${gd.s1[i]}" id="s1_${i}" oninput="updScore(${i},1,this.value)"></td>
       <td><input type="text" inputmode="text" value="${gd.s2[i]}" id="s2_${i}" oninput="updScore(${i},2,this.value)"></td>`;
-          tb.appendChild(tr);
+          frag.appendChild(tr);
         }
+        tb.appendChild(frag);
       }
       function updScore(i, t, v) {
         const n = parseFloat(v);
@@ -1092,43 +1530,47 @@
         }
       }
 
-      // ─── Prizes ──────────────────────────────────────────────────────────────────
-      function addPrize(team) {
+      // ─── Prizes ────────────────────────────────────────────────────────────
+      async function addPrize(team) {
         let defRound = gd.rounds;
         for (let i = gd.rounds - 1; i >= 0; i--) {
-          if (
-            (team === 1 && gd.s1[i] !== 0) ||
-            (team === 2 && gd.s2[i] !== 0)
-          ) {
+          if ((team === 1 && gd.s1[i] !== 0) || (team === 2 && gd.s2[i] !== 0)) {
             defRound = i + 1;
             break;
           }
         }
-        const rStr = prompt(
-          `Add prize for ${team === 1 ? gd.team1 : gd.team2}.\nEnter round number (1\u2013${gd.rounds}):`,
-          defRound,
-        );
+        const teamName = team === 1 ? gd.team1 : gd.team2;
+        const rStr = await modal({
+          title: `Add prize — ${teamName}`,
+          body: `Which round should this prize apply to? (1–${gd.rounds})`,
+          withInput: true,
+          inputValue: String(defRound),
+          confirmText: "Add prize",
+        });
         if (rStr === null) return;
         const r = parseInt(rStr);
         if (isNaN(r) || r < 1 || r > gd.rounds) {
-          alert("Invalid round number.");
+          await modal({
+            title: "Invalid round",
+            body: `Please enter a round number between 1 and ${gd.rounds}.`,
+            alertOnly: true,
+            confirmText: "Got it",
+          });
           return;
         }
         gd.prizes.push({ team, round: r, pts: 100, id: Date.now() });
-        // Deduct 100 from that round's score so the prize appears on the scoreboard
         if (team === 1) gd.s1[r - 1] = (gd.s1[r - 1] || 0) - 100;
         else gd.s2[r - 1] = (gd.s2[r - 1] || 0) - 100;
         save();
         renderScores();
         renderPrizes();
         refreshPrizeMarkers();
+        showToast(`Prize added — round ${r}`);
       }
       function removePrize(id) {
         const prize = gd.prizes.find((p) => p.id === id);
         if (!prize) return;
-        // Restore the 100 pts back to that round when prize is deleted
-        if (prize.team === 1)
-          gd.s1[prize.round - 1] = (gd.s1[prize.round - 1] || 0) + 100;
+        if (prize.team === 1) gd.s1[prize.round - 1] = (gd.s1[prize.round - 1] || 0) + 100;
         else gd.s2[prize.round - 1] = (gd.s2[prize.round - 1] || 0) + 100;
         gd.prizes = gd.prizes.filter((p) => p.id !== id);
         save();
@@ -1137,23 +1579,18 @@
         refreshPrizeMarkers();
       }
       function totalPrize(team) {
-        return gd.prizes
-          .filter((p) => p.team === team)
-          .reduce((a, p) => a + p.pts, 0);
+        return gd.prizes.filter((p) => p.team === team).reduce((a, p) => a + p.pts, 0);
       }
       function prizeCount(team) {
         return gd.prizes.filter((p) => p.team === team).length;
       }
-
       function renderPrizes() {
         document.getElementById("prizeSection").innerHTML =
           renderPrizeTeam(1) + renderPrizeTeam(2);
       }
       function renderPrizeTeam(team) {
         const name = team === 1 ? gd.team1 : gd.team2;
-        const list = gd.prizes
-          .filter((p) => p.team === team)
-          .sort((a, b) => a.round - b.round);
+        const list = gd.prizes.filter((p) => p.team === team).sort((a, b) => a.round - b.round);
         const total = list.reduce((a, p) => a + p.pts, 0);
         const items =
           list.length === 0
@@ -1162,43 +1599,38 @@
                 .map(
                   (p) => `<div class="prize-item">
         <div class="prize-item-left">
-          <div class="prize-dot"></div>
+          <span class="prize-dot">♦</span>
           <span>Round <strong>${p.round}</strong></span>
           <span class="prize-round-label">&minus;${p.pts} pts</span>
         </div>
-        <button class="prize-del" onclick="removePrize(${p.id})">&#10005;</button>
+        <button class="prize-del" onclick="removePrize(${p.id})" aria-label="Remove prize">&#10005;</button>
       </div>`,
                 )
                 .join("");
         return `<div class="prize-team-block">
     <div class="prize-team-header">
       <div><div class="prize-team-name">${name}</div>
-      <div style="font-size:12px;color:var(--muted);margin-top:3px">${list.length} prize(s) &mdash; total &minus;${total} pts</div></div>
-      <button class="btn btn-accent btn-sm" onclick="addPrize(${team})">+ Add prize</button>
+      <div class="prize-meta">${list.length} prize(s) &mdash; total &minus;${total} pts</div></div>
+      <button class="btn btn-accent btn-sm" onclick="addPrize(${team})">+ Add</button>
     </div>
     <div class="prize-list">${items}</div>
   </div>`;
       }
 
-      // ─── Paycheck — 4 players ────────────────────────────────────────────────────
-      // players index: 0,1 = team1 players; 2,3 = team2 players
+      // ─── Paycheck ──────────────────────────────────────────────────────────
       function playerTeam(idx) {
         return idx < 2 ? 1 : 2;
       }
       function playerTeamName(idx) {
         return idx < 2 ? gd.team1 : gd.team2;
       }
-
       function markPaid(playerIdx) {
         const name = gd.players[playerIdx];
         const now = new Date();
         const ts =
           now.toLocaleDateString("en-GB") +
           " " +
-          now.toLocaleTimeString("en-GB", {
-            hour: "2-digit",
-            minute: "2-digit",
-          });
+          now.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
         gd.paylog.unshift({
           playerIdx,
           playerName: name,
@@ -1209,43 +1641,42 @@
         });
         save();
         renderPaycheck();
+        showToast(`${name} marked as paid`);
       }
-
-      function clearPayLog() {
-        if (!confirm("Clear the entire payment log?")) return;
+      async function clearPayLog() {
+        if (gd.paylog.length === 0) return;
+        const ok = await modal({
+          title: "Clear payment log?",
+          body: "This removes the full payment history. It can't be undone.",
+          confirmText: "Clear log",
+          danger: true,
+        });
+        if (!ok) return;
         gd.paylog = [];
         save();
         renderPaycheck();
       }
-
       function renderPaycheck() {
-        // last payer badge
         const last = gd.paylog.length > 0 ? gd.paylog[0] : null;
         document.getElementById("lastPayerBadge").textContent = last
           ? `💰 ${last.playerName} (${last.teamName}) — ${last.ts}`
           : "— No record yet";
 
-        // 4 player blocks
         const grid = document.getElementById("playersGrid");
         grid.innerHTML = "";
+        const frag = document.createDocumentFragment();
         for (let i = 0; i < 4; i++) {
           const name = gd.players[i];
           const teamName = playerTeamName(i);
           const isLastPayer = last && last.playerIdx === i;
-          // mini log for this player
           const myLog = gd.paylog.filter((e) => e.playerIdx === i).slice(0, 5);
           const miniLogHtml =
             myLog.length === 0
-              ? `<div style="font-size:11px;color:var(--muted)">No payments</div>`
-              : myLog
-                  .map(
-                    (e) => `<div class="player-mini-log-entry">${e.ts}</div>`,
-                  )
-                  .join("");
+              ? `<div style="font-size:11px;color:var(--muted-dim)">No payments</div>`
+              : myLog.map((e) => `<div class="player-mini-log-entry">${e.ts}</div>`).join("");
 
           const block = document.createElement("div");
-          block.className =
-            "player-block" + (isLastPayer ? " last-paid-block" : "");
+          block.className = "player-block" + (isLastPayer ? " last-paid-block" : "");
           block.innerHTML = `
       <div class="player-block-header">
         <div>
@@ -1256,10 +1687,10 @@
       </div>
       <button class="player-pay-btn${isLastPayer ? " active-payer" : ""}" onclick="markPaid(${i})">💰 Mark as paid</button>
       <div class="player-mini-log">${miniLogHtml}</div>`;
-          grid.appendChild(block);
+          frag.appendChild(block);
         }
+        grid.appendChild(frag);
 
-        // full log
         const logEl = document.getElementById("payLogFull");
         if (gd.paylog.length === 0) {
           logEl.innerHTML = `<div class="pay-empty">No payments recorded yet</div>`;
@@ -1270,9 +1701,9 @@
           .map(
             (e, idx) => `
     <div class="pay-entry">
-      <div class="pay-entry-left">
+      <div>
         <div class="pay-entry-team">${idx === 0 ? "💰 " : ""}${e.playerName}</div>
-        <div style="font-size:11px;color:var(--muted)">${e.teamName}</div>
+        <div style="font-size:11px;color:var(--muted-dim)">${e.teamName}</div>
       </div>
       <div class="pay-entry-meta">${e.ts}</div>
     </div>`,
@@ -1280,23 +1711,30 @@
           .join("");
       }
 
-      // ─── Result ──────────────────────────────────────────────────────────────────
+      // ─── Result ────────────────────────────────────────────────────────────
       function calculateResult() {
         const sum1 = gd.s1.reduce((a, b) => a + b, 0),
           sum2 = gd.s2.reduce((a, b) => a + b, 0);
         const p1 = totalPrize(1),
           p2 = totalPrize(2);
-
-        // The sum already includes the -100 per prize, so it's the actual net score.
-        // We add the prizes back to get the "raw" score for display.
         const net1 = sum1,
           net2 = sum2;
         const raw1 = sum1 + p1,
           raw2 = sum2 + p2;
         const winTeam = net1 === net2 ? 0 : net1 < net2 ? 1 : 2;
 
-        document.getElementById("rth1").textContent = gd.team1;
-        document.getElementById("rth2").textContent = gd.team2;
+        document.getElementById("resultBody").innerHTML = `
+    <div class="result-cards" id="resultCards"></div>
+    <p class="section-label">Cumulative score by round</p>
+    <div class="running-wrap">
+      <table>
+        <thead>
+          <tr><th>Round</th><th id="rth1">${gd.team1}</th><th id="rth2">${gd.team2}</th><th>Lead</th></tr>
+        </thead>
+        <tbody id="runningBody"></tbody>
+      </table>
+    </div>`;
+
         document.getElementById("resultCards").innerHTML = `
     <div class="result-card ${winTeam === 1 ? "winner" : ""}">
       <div class="result-team">${gd.team1} ${winTeam === 1 ? "🏆" : ""}</div>
@@ -1318,8 +1756,8 @@
         } else {
           wb.textContent = `🏆 ${winTeam === 1 ? gd.team1 : gd.team2} wins!`;
           wb.style.color = "var(--accent2)";
-          wb.style.borderColor = "rgba(62,207,142,0.3)";
-          wb.style.background = "rgba(62,207,142,0.07)";
+          wb.style.borderColor = "rgba(111,176,155,0.3)";
+          wb.style.background = "rgba(111,176,155,0.08)";
         }
         wb.classList.add("show");
 
@@ -1327,35 +1765,37 @@
           r2 = 0;
         const rb = document.getElementById("runningBody");
         rb.innerHTML = "";
+        const frag = document.createDocumentFragment();
         for (let i = 0; i < gd.rounds; i++) {
           r1 += gd.s1[i];
           r2 += gd.s2[i];
           const diff = r1 - r2;
           let lead = `<span class="tie-c">Tie</span>`;
-          if (diff < 0)
-            lead = `<span class="lead-t1">${gd.team1} +${Math.abs(diff)}</span>`;
-          else if (diff > 0)
-            lead = `<span class="lead-t2">${gd.team2} +${diff}</span>`;
+          if (diff < 0) lead = `<span class="lead-t1">${gd.team1} +${Math.abs(diff)}</span>`;
+          else if (diff > 0) lead = `<span class="lead-t2">${gd.team2} +${diff}</span>`;
           const tr = document.createElement("tr");
           tr.innerHTML = `<td class="round-num">${i + 1}</td><td>${r1}</td><td>${r2}</td><td style="font-size:12px">${lead}</td>`;
-          rb.appendChild(tr);
+          frag.appendChild(tr);
         }
+        rb.appendChild(frag);
         switchTab("result");
         save();
       }
 
-      // ─── Graphs ──────────────────────────────────────────────────────────────────
+      // ─── Graphs ────────────────────────────────────────────────────────────
       async function generateGraphs() {
-        const url = document
-          .getElementById("backendUrl")
-          .value.trim()
-          .replace(/\/$/, "");
+        const url = document.getElementById("backendUrl").value.trim().replace(/\/$/, "");
         const status = document.getElementById("graphStatus");
         const img1 = document.getElementById("analizGraph");
         const img2 = document.getElementById("farkGraph");
 
         if (!url) {
-          alert("Please enter your backend server URL.");
+          await modal({
+            title: "Missing server address",
+            body: "Enter your backend server URL before generating graphs.",
+            alertOnly: true,
+            confirmText: "Got it",
+          });
           return;
         }
         status.style.display = "block";
@@ -1386,56 +1826,53 @@
             img2.classList.add("loaded");
             status.textContent = "✅ Graphs loaded successfully.";
           } else {
-            status.textContent =
-              "❌ Backend did not return graph data. Check server logs.";
+            status.textContent = "❌ Backend did not return graph data. Check server logs.";
           }
         } catch (err) {
           status.textContent = `❌ Could not reach backend: ${err.message}`;
         }
       }
 
-      // ─── Tabs ─────────────────────────────────────────────────────────────────────
+      // ─── Tabs ──────────────────────────────────────────────────────────────
       const TAB_MAP = ["scores", "prizes", "paycheck", "result", "graphs"];
       function switchTab(id) {
-        document
-          .querySelectorAll(".tab")
-          .forEach((t) => t.classList.remove("active"));
-        document
-          .querySelectorAll(".tab-content")
-          .forEach((t) => t.classList.remove("active"));
+        document.querySelectorAll(".tab").forEach((t) => t.classList.remove("active"));
+        document.querySelectorAll(".tab-content").forEach((t) => t.classList.remove("active"));
         document.getElementById("tab-" + id).classList.add("active");
         const idx = TAB_MAP.indexOf(id);
-        if (idx >= 0)
-          document.querySelectorAll(".tab")[idx].classList.add("active");
+        if (idx >= 0) document.querySelectorAll(".tab")[idx].classList.add("active");
       }
 
-      // ─── Reset — scores only ──────────────────────────────────────────────────────
-      function resetGame() {
-        if (
-          !confirm(
-            "Reset game scores and prizes?\n\nOverall Scoreboard, Payments and Settings will be kept.",
-          )
-        )
-          return;
+      // ─── Reset ─────────────────────────────────────────────────────────────
+      async function resetGame() {
+        const ok = await modal({
+          title: "Reset game scores?",
+          body: "Rounds and prizes will be cleared. The series scoreboard, payment log and settings are kept.",
+          confirmText: "Reset scores",
+          danger: true,
+        });
+        if (!ok) return;
+
         gd.s1 = Array(gd.rounds).fill(0);
         gd.s2 = Array(gd.rounds).fill(0);
-        gd.prizes = []; // Clears the prizes
+        gd.prizes = [];
 
         document.getElementById("winnerBanner").classList.remove("show");
-        document.getElementById("resultCards").innerHTML = "";
-        document.getElementById("runningBody").innerHTML = "";
+        document.getElementById("resultBody").innerHTML = `
+    <div class="result-empty"><span class="glyph">♥</span>Tap Calculate to settle the round.</div>`;
         document.getElementById("analizGraph").classList.remove("loaded");
         document.getElementById("farkGraph").classList.remove("loaded");
         document.getElementById("graphStatus").style.display = "none";
 
         save();
         renderScores();
-        renderPrizes(); // Clears the UI on the prizes tab
+        renderPrizes();
         refreshPrizeMarkers();
         switchTab("scores");
+        showToast("Scores reset");
       }
 
-      // ─── Export Excel — original format preserved ─────────────────────────────────
+      // ─── Export Excel ──────────────────────────────────────────────────────
       function exportExcel() {
         const sum1 = gd.s1.reduce((a, b) => a + b, 0),
           sum2 = gd.s2.reduce((a, b) => a + b, 0);
@@ -1448,40 +1885,25 @@
         const raw1 = sum1 + p1,
           raw2 = sum2 + p2;
 
-        // Sheet 1: Scores — original layout
         const rows = [["All Games", gd.team1, gd.team2]];
-        for (let i = 0; i < gd.rounds; i++) {
-          rows.push([`Round ${i + 1}`, gd.s1[i], gd.s2[i]]);
-        }
+        for (let i = 0; i < gd.rounds; i++) rows.push([`Round ${i + 1}`, gd.s1[i], gd.s2[i]]);
         rows.push([
           `Total ${gd.team1}: ${raw1} (After Prizes: ${net1})`,
           `Prizes = ${pc1}`,
           `Prizes = ${pc2}`,
         ]);
-        rows.push([
-          `Total ${gd.team2}: ${raw2} (After Prizes: ${net2})`,
-          "",
-          "",
-        ]);
+        rows.push([`Total ${gd.team2}: ${raw2} (After Prizes: ${net2})`, "", ""]);
 
         const ws1 = XLSX.utils.aoa_to_sheet(rows);
         ws1["!cols"] = [{ wch: 40 }, { wch: 15 }, { wch: 15 }];
 
-        // Sheet 2: Prizes detail
         const pr = [["Team", "Round", "Points Deducted"]];
         gd.prizes
           .sort((a, b) => a.round - b.round)
-          .forEach((p) =>
-            pr.push([
-              p.team === 1 ? gd.team1 : gd.team2,
-              `Round ${p.round}`,
-              p.pts,
-            ]),
-          );
+          .forEach((p) => pr.push([p.team === 1 ? gd.team1 : gd.team2, `Round ${p.round}`, p.pts]));
         const ws2 = XLSX.utils.aoa_to_sheet(pr);
         ws2["!cols"] = [{ wch: 20 }, { wch: 12 }, { wch: 16 }];
 
-        // Sheet 3: Payments
         const pa = [["Player", "Team", "Timestamp"]];
         gd.paylog.forEach((e) => pa.push([e.playerName, e.teamName, e.ts]));
         const ws3 = XLSX.utils.aoa_to_sheet(pa);
@@ -1492,9 +1914,10 @@
         XLSX.utils.book_append_sheet(wb, ws2, "Prizes");
         XLSX.utils.book_append_sheet(wb, ws3, "Payments");
         XLSX.writeFile(wb, `${gd.title}_results.xlsx`);
+        showToast("Excel file downloaded");
       }
 
-      // ─── WhatsApp ─────────────────────────────────────────────────────────────────
+      // ─── WhatsApp ──────────────────────────────────────────────────────────
       function shareWhatsApp() {
         const sum1 = gd.s1.reduce((a, b) => a + b, 0),
           sum2 = gd.s2.reduce((a, b) => a + b, 0);
@@ -1505,8 +1928,7 @@
         const raw1 = sum1 + p1,
           raw2 = sum2 + p2;
 
-        const winner =
-          net1 === net2 ? "Tie" : net1 < net2 ? gd.team1 : gd.team2;
+        const winner = net1 === net2 ? "Tie" : net1 < net2 ? gd.team1 : gd.team2;
         const lp =
           gd.paylog.length > 0
             ? `Last paid: ${gd.paylog[0].playerName} (${gd.paylog[0].teamName}) at ${gd.paylog[0].ts}`
@@ -1515,7 +1937,7 @@
         window.open("https://wa.me/?text=" + encodeURIComponent(msg), "_blank");
       }
 
-      // ─── Boot ─────────────────────────────────────────────────────────────────────
+      // ─── Boot ──────────────────────────────────────────────────────────────
       load();
     </script>
   </body>

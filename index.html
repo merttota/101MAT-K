@@ -1,4 +1,3 @@
-
 <!doctype html>
 <html lang="en">
   <head>
@@ -1165,6 +1164,34 @@
       </div>
 
       <button
+        type="button"
+        class="players-toggle"
+        id="syncToggleBtn"
+        onclick="toggleSyncPanel()"
+      >
+        <span class="chevron">&#9654;</span>
+        Cloud sync (optional — share scores across devices)
+      </button>
+      <div class="players-panel" id="syncPanel" style="grid-template-columns: 1fr">
+        <p style="font-size: 12px; color: var(--muted); line-height: 1.5; margin-bottom: 2px">
+          Everything already saves on this device automatically. To share one game
+          between phones, deploy the small free backend from the guide, paste its
+          address below, then push from one device and pull on the other.
+        </p>
+        <label class="field"
+          >Backend URL<input
+            type="text"
+            id="syncUrlInput"
+            placeholder="https://your-app.onrender.com"
+        /></label>
+        <div class="btn-bar">
+          <button class="btn btn-sm" onclick="pushToCloud()">&#8593; Push to cloud</button>
+          <button class="btn btn-sm" onclick="pullFromCloud()">&#8595; Pull from cloud</button>
+        </div>
+        <p id="syncStatus" style="font-size: 11.5px; color: var(--muted); margin-top: 2px"></p>
+      </div>
+
+      <button
         class="btn btn-accent"
         onclick="applySettings()"
         style="margin-top: 4px; width: 100%"
@@ -1319,6 +1346,7 @@
     <script>
       // ─── State ─────────────────────────────────────────────────────────────
       const STORAGE_KEY = "game-data";
+      const SYNC_URL_KEY = "game-data-sync-url";
       let gd = {
         title: "Game-1",
         team1: "Yusuf-Yüksel",
@@ -1380,34 +1408,31 @@
         showToast._tm = setTimeout(() => t.classList.remove("show"), 2600);
       }
 
-      // ─── Persistence (cloud key/value storage) ────────────────────────────
-      let saveTimer = null;
+      // ─── Persistence — saved on this device (localStorage) ────────────────
+      // Everything below saves instantly to this browser. No backend required.
+      // See the optional "Cloud sync" panel further down for syncing across
+      // devices once you've deployed the small Flask backend from the guide.
       function setSaveStatus(state) {
         const el = document.getElementById("saveStatus");
         const txt = document.getElementById("saveStatusText");
         el.className = "save-status " + state;
         txt.textContent =
-          state === "pending" ? "Saving…" : state === "error" ? "Not saved" : "Synced";
+          state === "pending" ? "Saving…" : state === "error" ? "Not saved" : "Saved on device";
       }
       function save() {
-        setSaveStatus("pending");
-        clearTimeout(saveTimer);
-        saveTimer = setTimeout(persist, 500);
-      }
-      async function persist() {
         try {
-          await window.storage.set(STORAGE_KEY, JSON.stringify(gd), false);
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(gd));
           setSaveStatus("saved");
         } catch (err) {
-          console.error("Storage error:", err);
+          console.error("localStorage error:", err);
           setSaveStatus("error");
         }
       }
-      async function load() {
+      function load() {
         try {
-          const result = await window.storage.get(STORAGE_KEY);
-          if (result && result.value) {
-            const parsed = JSON.parse(result.value);
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (raw) {
+            const parsed = JSON.parse(raw);
             gd = Object.assign({}, gd, parsed);
             if (!gd.players || gd.players.length < 4)
               gd.players = ["Yusuf", "Yüksel", "Ahmet", "Mete"];
@@ -1415,8 +1440,11 @@
             if (gd.overall2 === undefined) gd.overall2 = 0;
           }
         } catch (err) {
-          // No saved game yet — start fresh with defaults.
+          // No saved game yet, or storage unavailable — start fresh with defaults.
         }
+        const savedSyncUrl = localStorage.getItem(SYNC_URL_KEY);
+        if (savedSyncUrl) document.getElementById("syncUrlInput").value = savedSyncUrl;
+
         syncInputs();
         render();
         document.getElementById("loadOverlay").classList.add("hidden");
@@ -1432,10 +1460,78 @@
         renderOverallDisplay();
       }
 
+      // ─── Cloud sync — optional, talks to your own Flask + Render backend ──
+      function getSyncUrl() {
+        return document.getElementById("syncUrlInput").value.trim().replace(/\/$/, "");
+      }
+      function setSyncStatus(msg, isError) {
+        const el = document.getElementById("syncStatus");
+        el.textContent = msg;
+        el.style.color = isError ? "var(--danger)" : "var(--muted)";
+      }
+      async function pushToCloud() {
+        const url = getSyncUrl();
+        if (!url) {
+          setSyncStatus("Enter your backend URL first.", true);
+          return;
+        }
+        localStorage.setItem(SYNC_URL_KEY, url);
+        setSyncStatus("Pushing…");
+        try {
+          const res = await fetch(`${url}/api/state`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(gd),
+          });
+          if (!res.ok) throw new Error(`Server responded ${res.status}`);
+          setSyncStatus("Pushed to cloud just now.");
+          showToast("Synced to cloud");
+        } catch (err) {
+          setSyncStatus(`Couldn't reach backend: ${err.message}`, true);
+        }
+      }
+      async function pullFromCloud() {
+        const url = getSyncUrl();
+        if (!url) {
+          setSyncStatus("Enter your backend URL first.", true);
+          return;
+        }
+        localStorage.setItem(SYNC_URL_KEY, url);
+        const ok = await modal({
+          title: "Pull from cloud?",
+          body: "This replaces everything on this device with the version saved on your backend.",
+          confirmText: "Pull & overwrite",
+          danger: true,
+        });
+        if (!ok) return;
+        setSyncStatus("Pulling…");
+        try {
+          const res = await fetch(`${url}/api/state`);
+          if (res.status === 404) {
+            setSyncStatus("No data saved on that backend yet — push first.", true);
+            return;
+          }
+          if (!res.ok) throw new Error(`Server responded ${res.status}`);
+          const body = await res.json();
+          gd = Object.assign({}, gd, body.data);
+          save();
+          syncInputs();
+          render();
+          setSyncStatus("Pulled from cloud just now.");
+          showToast("Loaded from cloud");
+        } catch (err) {
+          setSyncStatus(`Couldn't reach backend: ${err.message}`, true);
+        }
+      }
+
       // ─── Players panel toggle ──────────────────────────────────────────────
       function togglePlayersPanel() {
         document.getElementById("playersPanel").classList.toggle("open");
         document.getElementById("playersToggleBtn").classList.toggle("open");
+      }
+      function toggleSyncPanel() {
+        document.getElementById("syncPanel").classList.toggle("open");
+        document.getElementById("syncToggleBtn").classList.toggle("open");
       }
 
       // ─── Overall scoreboard ────────────────────────────────────────────────
